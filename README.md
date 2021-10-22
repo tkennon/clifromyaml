@@ -1,5 +1,7 @@
 # clifromyaml
 
+Work in progress...
+
 `clifromyaml` is a tool to generate a Go CLI for an application. Simply define a
 CLI in yaml, run the `clifromyaml` tool to generate the bindings, and then get
 on with the interesting bits of coding: application logic.
