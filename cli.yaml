@@ -1,0 +1,19 @@
+version: 0.0.1
+command:
+  help: Generate Golang CLI bindings from a YAML definition
+  args:
+    - yaml-spec: the YAML file containing the CLI definition
+  flags:
+    package-name:
+      dash: p
+      help: The package name to use for the generated Go bindings
+      default: main
+    outfile:
+      dash: o
+      help: The `file` that the generated CLI bindings should be written to. If
+            empty then they will be written to stdout.
+      default: ""
+    dry-run:
+      help: Don't write the generated Go bindings anywhere, just parse the yaml
+            and print any errors.
+      default: false
