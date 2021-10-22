@@ -10,11 +10,6 @@ import (
 	"strings"
 )
 
-// TODO(tk):
-// - maps in templates are iterated over sorted key order making them
-//   deterministic.
-// - stretch: autogen version
-
 type Application interface {
 	Root
 }
@@ -40,6 +35,7 @@ type Root interface {
 type rootCommand struct {
 	command
 	helpBuffer  *bytes.Buffer
+	version     *bool
 	dryRun      *bool
 	outfile     *string
 	packageName *string
@@ -54,6 +50,7 @@ func newRootCommand(w io.Writer, root Root) rootCommand {
 	c := rootCommand{
 		command:     newCommand(w, "Generate Golang CLI bindings from a YAML definition", flags),
 		helpBuffer:  helpBuffer,
+		version:     flags.Bool("version", false, "print version"),
 		dryRun:      flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
 		outfile:     flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to stdout."),
 		packageName: flags.String("package-name", "main", "The package name to use for the generated Go bindings"),
@@ -87,7 +84,7 @@ func (c *rootCommand) bufferHelp() {
 	fmt.Fprintln(c.helpBuffer, c.usage())
 
 	fmt.Fprintln(c.helpBuffer, "Arguments:")
-	fmt.Fprintf(c.helpBuffer, "  yaml-spec: the YAML file containing the CLI definition\n")
+	fmt.Fprintln(c.helpBuffer, "  yaml-spec: the YAML file containing the CLI definition")
 	fmt.Fprintln(c.helpBuffer, "Flags:")
 	c.flags.PrintDefaults()
 }
@@ -97,9 +94,17 @@ func (c *rootCommand) writeHelp() error {
 	return err
 }
 
+func (c *rootCommand) writeVersion() error {
+	_, err := fmt.Fprintln(c.w, "0.0.1")
+	return err
+}
+
 func (c *rootCommand) run(args []string) error {
 	switch err := c.flags.Parse(args); err {
 	case nil:
+		if *c.version {
+			return c.writeVersion()
+		}
 		args = c.flags.Args()
 
 		if len(args) < 1 {

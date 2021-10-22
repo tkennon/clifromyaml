@@ -14,46 +14,9 @@ import (
 )
 
 var (
-	//go:embed cli.tmpl
+	//go:embed cli.go.tmpl
 	cliTemplate string
 )
-
-// func main() {
-// 	var s Specification
-// 	b, err := os.ReadFile(os.Args[1])
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	if err := yaml.Unmarshal(b, &s); err != nil {
-// 		panic(err)
-// 	}
-
-// 	if err := s.validate(); err != nil {
-// 		panic(err)
-// 	}
-
-// 	tmpl, err := template.New("cli").Funcs(template.FuncMap{
-// 		"toCamelCase": toCamelCase,
-// 		"title":       strings.Title,
-// 	}).Parse(cliTemplate)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	buf := new(bytes.Buffer)
-// 	if err := tmpl.Execute(buf, struct {
-// 		Specification
-// 		PackageName string
-// 	}{s, "main"}); err != nil {
-// 		panic(err)
-// 	}
-// 	os.Stdout.Write(buf.Bytes())
-// }
-
-func main() {
-	if err := NewCLI(application{}).Run(); err != nil {
-		fmt.Println(err)
-	}
-}
 
 type application struct{}
 
@@ -67,6 +30,7 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 	if err := yaml.Unmarshal(b, &s); err != nil {
 		return err
 	}
+	s.Command.version = s.Version
 
 	if err := s.validate(); err != nil {
 		return err
@@ -101,6 +65,11 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 		return err
 	}
 
-	format := exec.Command("gofmt", "-w", outfile)
-	return format.Run()
+	return exec.Command("gofmt", "-w", outfile).Run()
+}
+
+func main() {
+	if err := NewCLI(application{}).Run(); err != nil {
+		fmt.Println(err)
+	}
 }

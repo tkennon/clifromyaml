@@ -15,9 +15,9 @@ type Specification struct {
 
 type Command struct {
 	isRoot       bool
+	version      string
 	Name         string
 	Help         string              `yaml:"help"`
-	Usage        string              `yaml:"usage"`
 	Args         []map[string]string `yaml:"args"`
 	VariadicArgs bool                `yaml:"vargs"`
 	Flags        map[string]*Flag    `yaml:"flags"`
@@ -63,6 +63,10 @@ func (s Specification) validate() error {
 
 func (c *Command) IsRoot() bool {
 	return c.isRoot
+}
+
+func (c *Command) Version() string {
+	return c.version
 }
 
 func (c *Command) WithName(name string) *Command {
