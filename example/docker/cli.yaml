@@ -1,0 +1,93 @@
+app: docker
+run:
+  help: Docker is an example of an app that has many nested subcommands.
+  subcommands:
+    container:
+      help: Manage containers
+      subcommands:
+        ls:
+          help: List containers
+          flags:
+            all:
+              help: Show all containers (default shows just running containers)
+              default: false
+            filter:
+              help: Filter output based on conditions provided
+              default: ""
+            format:
+              help: Pretty-print container using a Go template
+              default: ""
+            last:
+              help: Show n last created containers (incluides all states)
+              default: -1
+            no-trunc:
+              help: Don't truncate output
+              default: false
+            quiet:
+              help: Only display containers IDs
+              default: false
+            size:
+              help: Display total file sizes
+              default: false
+        rm:
+          help: Remove one or more containers
+          flags:
+            force:
+              help: Force the removal of a running container (uses SIGKILL)
+              default: false
+            link:
+              help: Remove the specified link
+              default: false
+            volumes:
+              help: Remove anonymous volumes associated with the container
+              default: false
+          vargs: true
+        start:
+          help: Start one or more stopped containers
+          flags:
+            attach:
+              help: Attach STDOUT/STDERR and forward signals
+              default: false
+            detach-keys:
+              help: Override the key sequence for detaching a conatiner
+              default: ""
+            interactive:
+              help: Attach container's STDIN
+              default: false
+          vargs: true
+    volume:
+      help: Manage volumes
+      subcommands:
+        ls:
+          help: List volumes
+          flags:
+            filter:
+              help: Provide filter valies (e.g. 'dangling=true')
+              default: ""
+            format:
+              help: Pretty-print volumes using a Go template
+              default: ""
+            quiet:
+              help: Only display volume names
+              default: false
+        rm:
+          help: Remove one or more volumes. You cannot remove a volume that is
+                in user by a container.
+          flags:
+            force:
+              help: Force the removal of one or more volumes
+              default: false
+          vargs: true
+    network:
+      help: Manage networks
+      subcommands:
+        inspect:
+          help: Display detailed information on one or more networks
+          flags:
+            format:
+              help: Format the output using the given Go template
+              default: ""
+            verbose:
+              help: Verbose output for diagnostics
+              default: false
+

@@ -86,12 +86,12 @@ func (c *clifromyamlCommand) usage() string {
 }
 
 func (c *clifromyamlCommand) bufferHelp() {
-	fmt.Fprintln(c.helpBuffer, c.help)
-	fmt.Fprintln(c.helpBuffer, c.usage())
+	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
+	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
 
-	fmt.Fprintln(c.helpBuffer, "Arguments:")
+	fmt.Fprintf(c.helpBuffer, "\nArguments:\n")
 	fmt.Fprintln(c.helpBuffer, "  yaml-spec: the YAML file containing the CLI definition")
-	fmt.Fprintln(c.helpBuffer, "Flags:")
+	fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults()
 }
 

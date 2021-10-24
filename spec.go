@@ -60,8 +60,11 @@ func (s Specification) setNames() {
 }
 
 func (s Specification) validate() error {
+	if s.AppName == "" {
+		return errors.New("no \"app\" defined")
+	}
 	if s.Command == nil {
-		return errors.New("no \"exec:\" defined")
+		return errors.New("no \"run\" defined")
 	}
 	if err := s.Command.validate(); err != nil {
 		return fmt.Errorf("%q: %w", s.AppName, err)
@@ -112,14 +115,13 @@ func (c *Command) validate() error {
 		}
 	}
 
-	if len(c.SubCommands) > 0 && len(c.Args) > 0 {
-		return errors.New("cannot define both args and subcommands")
-	}
-	if len(c.Args) > 0 && c.VariadicArgs {
-		return errors.New("cannot define both args and variadic args")
-	}
-	if c.VariadicArgs && len(c.SubCommands) > 0 {
-		return errors.New("cannot define both subcommands and variadic args")
+	if len(c.SubCommands) > 0 {
+		if len(c.Args) > 0 {
+			return errors.New("cannot define both subcommands and args")
+		}
+		if c.VariadicArgs {
+			return errors.New("cannot define both subcommands and variadic args")
+		}
 	}
 
 	for _, arg := range c.Args {
@@ -201,16 +203,16 @@ func orderedFlagNames(flags map[string]*Flag) []string {
 	return names
 }
 
-func (c *Command) Parameters() string {
+func (c *Command) Parameters(argsVarName string) string {
 	var params []string
 	for _, name := range orderedFlagNames(c.Flags) {
 		params = append(params, fmt.Sprintf("*c.%s", toCamelCase(name)))
 	}
 	for i := range c.Args {
-		params = append(params, fmt.Sprintf("args[%d]", i))
+		params = append(params, fmt.Sprintf("%s[%d]", argsVarName, i))
 	}
 	if c.VariadicArgs {
-		params = append(params, "args...")
+		params = append(params, fmt.Sprintf("%s[%d:]...", argsVarName, len(c.Args)))
 	}
 	return strings.Join(params, ", ")
 }

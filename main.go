@@ -36,7 +36,7 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 	s.setNames()
 
 	if err := s.validate(); err != nil {
-		return err
+		return fmt.Errorf("error parsing cli yaml definition: %w", err)
 	}
 
 	tmpl, err := template.New("cli").Funcs(template.FuncMap{

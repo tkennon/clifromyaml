@@ -1,0 +1,11 @@
+app: simple
+run:
+  help: A very simply application
+  args:
+    - first: The first something to do simply
+    - second: Another something
+  vargs: true
+  flags:
+    wait:
+      help: wait a bit before doing simple things
+      default: 5s

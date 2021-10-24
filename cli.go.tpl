@@ -88,14 +88,13 @@ func (c *{{.ChainedName}}Command) run(args []string) error {
             return c.writeVersion()
         }{{end}}
         args = c.flags.Args()
-        {{if eq .VariadicArgs true}}return c.{{toCamelCase .Name}}.Run{{title .ChainedName}}({{.Parameters}}){{else}}
-        if len(args) < {{len .Args}} {
-            return fmt.Errorf("too few arguments to '{{.Name}}'; expected {{len .Args}}, but got %d", len(args))
+        {{if gt (len .Args) 0}}if len(args) < {{len .Args}} {
+            return fmt.Errorf("too few arguments to '{{.Name}}'; expected {{len .Args}}{{if .VariadicArgs}} or more{{end}}, but got %d", len(args))
         }
-        if len(args) > {{len .Args}} {
+        {{if not .VariadicArgs}}if len(args) > {{len .Args}} {
             return fmt.Errorf("too many arguments to '{{.Name}}'; expected {{len .Args}}, but got %d", len(args))
-        }
-        return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.Parameters}}){{end}}
+        }{{end}}{{end}}
+        return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.Parameters "args"}})
     case flag.ErrHelp:
         return c.writeHelp()
     default:
