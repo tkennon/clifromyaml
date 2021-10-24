@@ -102,6 +102,9 @@ $ ./example bar a b c d e f g h i j k l m n o p
 Doing bar for: [a b c d e f g h i j k l m n o p]
 ```
 
+Check out the  `example/` directory for further examples. Also checkout
+`cli.yaml` which defines the CLI used for `clifromyaml` itself.
+
 ## Yaml specification
 
 ```yaml
