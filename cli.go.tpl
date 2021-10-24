@@ -26,7 +26,7 @@ func new{{title .ChainedName}}Command(w io.Writer, {{if eq (len .SubCommands) 0}
 }
 
 func (c *{{.ChainedName}}Command) usage() string {
-    usage := []string{"Usage:", "{{.Name}}"}
+    usage := []string{"Usage:", {{range $_, $pname := .ParentNames}}"{{$pname}}", {{end}}"{{.Name}}"}
     {{if gt (len .SubCommands) 0}}subCommands := []string{
         {{range $cname, $command := .SubCommands}}"{{$cname}}",
         {{end}}
@@ -35,18 +35,19 @@ func (c *{{.ChainedName}}Command) usage() string {
     c.flags.VisitAll(appendFlagUsage(usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
     {{end}}
+    {{if .VariadicArgs}}usage = append(usage, "[<args>...]"){{end}}
     return strings.Join(usage, " ")
 }
 
 func (c *{{.ChainedName}}Command) bufferHelp() {
-    fmt.Fprintln(c.helpBuffer, c.help)
-    fmt.Fprintln(c.helpBuffer, c.usage())
-    {{if gt (len .SubCommands) 0}}fmt.Fprintln(c.helpBuffer, "Sub-Commands:"){{end}}
+    fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
+    fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
+    {{if gt (len .SubCommands) 0}}fmt.Fprintln(c.helpBuffer, "\nSub-Commands:"){{end}}
     {{range $cname, $command := .SubCommands}}fmt.Fprintln(c.helpBuffer, "  {{$cname}}: {{$command.Help}}")
     {{end}}
-    {{if gt (len .Args) 0}}fmt.Fprintln(c.helpBuffer, "Arguments:"){{end}}
+    {{if gt (len .Args) 0}}fmt.Fprintf(c.helpBuffer, "\nArguments:\n"){{end}}
     {{range .Args}}{{range $argName, $help := .}}fmt.Fprintln(c.helpBuffer, "  {{$argName}}: {{$help}}"){{end}}
-    {{end}}{{if gt (len .Flags) 0}}fmt.Fprintln(c.helpBuffer, "Flags:")
+    {{end}}{{if gt (len .Flags) 0}}fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults(){{end}}
 }
 

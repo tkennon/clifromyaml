@@ -9,9 +9,9 @@ import (
 )
 
 type Specification struct {
-	*Command `yaml:"run"`
-	AppName  string `yaml:"app"`
-	Version  string `yaml:"version"`
+	AppName string   `yaml:"app"`
+	Version string   `yaml:"version"`
+	Command *Command `yaml:"run"`
 }
 
 type Command struct {
@@ -63,7 +63,10 @@ func (s Specification) validate() error {
 	if s.Command == nil {
 		return errors.New("no \"exec:\" defined")
 	}
-	return s.Command.validate("exec")
+	if err := s.Command.validate(); err != nil {
+		return fmt.Errorf("%q: %w", s.AppName, err)
+	}
+	return nil
 }
 
 func (c *Command) IsRoot() bool {
@@ -98,44 +101,43 @@ func (c *Command) stdlibPackageIsUsed(pkg string) bool {
 	return false
 }
 
-func (c *Command) validate(name string) error {
+func (c *Command) validate() error {
 	if c == nil {
-		return fmt.Errorf("%q command cannot be null", name)
+		return errors.New("command cannot be null")
 	}
 
-	subCommandsDefined := false
 	for name, cmd := range c.SubCommands {
-		subCommandsDefined = true
-		if err := cmd.validate(name); err != nil {
-			return err
+		if err := cmd.validate(); err != nil {
+			return fmt.Errorf("%q: %w", name, err)
 		}
 	}
 
-	if subCommandsDefined {
-		if len(c.Args) > 0 {
-			return fmt.Errorf("cannot define both args and sub-commands for %q", name)
-		}
-		if c.VariadicArgs {
-			return fmt.Errorf("cannot define both args and variadic args for %q", name)
-		}
+	if len(c.SubCommands) > 0 && len(c.Args) > 0 {
+		return errors.New("cannot define both args and subcommands")
+	}
+	if len(c.Args) > 0 && c.VariadicArgs {
+		return errors.New("cannot define both args and variadic args")
+	}
+	if c.VariadicArgs && len(c.SubCommands) > 0 {
+		return errors.New("cannot define both subcommands and variadic args")
 	}
 
 	for _, arg := range c.Args {
 		if len(arg) != 1 {
-			return fmt.Errorf("arg mapping for %q must be exactly one key to one value", name)
+			return errors.New("arg mapping must be exactly one key to one value")
 		}
 		for flagName := range c.Flags {
 			for argName := range arg {
 				if flagName == argName {
-					return fmt.Errorf("cannot declare flag and argument as %q for %q", flagName, name)
+					return fmt.Errorf("cannot declare both flag and argument as %q", flagName)
 				}
 			}
 		}
 	}
 
 	for name, flag := range c.Flags {
-		if flag.Default == nil {
-			return fmt.Errorf("must define a default value for flag %q", name)
+		if err := flag.validate(); err != nil {
+			return fmt.Errorf("%q: %w", name, err)
 		}
 	}
 
@@ -157,6 +159,10 @@ func (c *Command) ParametersAndTypes() string {
 	}
 
 	return strings.Join(argsStr, ", ")
+}
+
+func (c *Command) ParentNames() []string {
+	return c.parentNames
 }
 
 func (c *Command) setNames(parents []string, self string) {
@@ -266,4 +272,11 @@ func (f Flag) DefaultArg() interface{} {
 		return fmt.Sprintf("time.Duration(%d)", int64(d))
 	}
 	return fmt.Sprintf("%q", str)
+}
+
+func (f Flag) validate() error {
+	if f.Default == nil {
+		return errors.New("flag default must be defined")
+	}
+	return nil
 }
