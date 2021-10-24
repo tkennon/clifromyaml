@@ -259,7 +259,7 @@ func (c *dockerContainerLsCommand) run(args []string) error {
 }
 
 type DockerContainerRm interface {
-	RunDockerContainerRm(force bool, link bool, volumes bool, container string, vargs ...string) error
+	RunDockerContainerRm(force bool, link bool, volumes bool, container string, containers ...string) error
 }
 
 type dockerContainerRmCommand struct {
@@ -288,7 +288,7 @@ func (c *dockerContainerRmCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container", "rm"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<container>")
-	usage = append(usage, "[<args>...]")
+	usage = append(usage, "[<containers>...]")
 	return strings.Join(usage, " ")
 }
 
@@ -325,7 +325,7 @@ func (c *dockerContainerRmCommand) run(args []string) error {
 }
 
 type DockerContainerStart interface {
-	RunDockerContainerStart(attach bool, detachKeys string, interactive bool, container string, vargs ...string) error
+	RunDockerContainerStart(attach bool, detachKeys string, interactive bool, container string, containers ...string) error
 }
 
 type dockerContainerStartCommand struct {
@@ -354,7 +354,7 @@ func (c *dockerContainerStartCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container", "start"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<container>")
-	usage = append(usage, "[<args>...]")
+	usage = append(usage, "[<containers>...]")
 	return strings.Join(usage, " ")
 }
 
@@ -447,7 +447,7 @@ func (c *dockerNetworkCommand) run(args []string) error {
 }
 
 type DockerNetworkInspect interface {
-	RunDockerNetworkInspect(format string, verbose bool, network string, vargs ...string) error
+	RunDockerNetworkInspect(format string, verbose bool, network string, networks ...string) error
 }
 
 type dockerNetworkInspectCommand struct {
@@ -474,7 +474,7 @@ func (c *dockerNetworkInspectCommand) usage() string {
 	usage := []string{"Usage:", "docker", "network", "inspect"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<network>")
-	usage = append(usage, "[<args>...]")
+	usage = append(usage, "[<networks>...]")
 	return strings.Join(usage, " ")
 }
 
@@ -637,7 +637,7 @@ func (c *dockerVolumeLsCommand) run(args []string) error {
 }
 
 type DockerVolumeRm interface {
-	RunDockerVolumeRm(force bool, volume string, vargs ...string) error
+	RunDockerVolumeRm(force bool, volume string, volumes ...string) error
 }
 
 type dockerVolumeRmCommand struct {
@@ -662,7 +662,7 @@ func (c *dockerVolumeRmCommand) usage() string {
 	usage := []string{"Usage:", "docker", "volume", "rm"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<volume>")
-	usage = append(usage, "[<args>...]")
+	usage = append(usage, "[<volumes>...]")
 	return strings.Join(usage, " ")
 }
 

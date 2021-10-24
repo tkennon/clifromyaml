@@ -50,7 +50,7 @@ func appendFlagUsage(usage []string) func(f *flag.Flag) {
 }
 
 type Simple interface {
-	Run(wait time.Duration, first string, second string, vargs ...string) error
+	Run(wait time.Duration, first string, second string, somethings ...string) error
 }
 
 type simpleCommand struct {
@@ -76,7 +76,7 @@ func (c *simpleCommand) usage() string {
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<first>")
 	usage = append(usage, "<second>")
-	usage = append(usage, "[<args>...]")
+	usage = append(usage, "[<somethings>...]")
 	return strings.Join(usage, " ")
 }
 

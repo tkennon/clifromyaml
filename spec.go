@@ -21,7 +21,7 @@ type Command struct {
 	parentNames  []string
 	Help         string              `yaml:"help"`
 	Args         []map[string]string `yaml:"args"`
-	VariadicArgs bool                `yaml:"vargs"`
+	VariadicArgs *Vargs              `yaml:"vargs"`
 	Flags        map[string]*Flag    `yaml:"flags"`
 	SubCommands  map[string]*Command `yaml:"subcommands"`
 }
@@ -29,6 +29,19 @@ type Command struct {
 type Flag struct {
 	Help    string      `yaml:"help"`
 	Default interface{} `yaml:"default"`
+}
+
+type Vargs struct {
+	Min  uint   `yaml:"min"`
+	Max  uint   `yaml:"max"`
+	Type string `yaml:"type"`
+}
+
+func (v *Vargs) Name() string {
+	if v != nil && v.Type != "" {
+		return v.Type
+	}
+	return "vargs"
 }
 
 func toCamelCase(in string) string {
@@ -119,7 +132,7 @@ func (c *Command) validate() error {
 		if len(c.Args) > 0 {
 			return errors.New("cannot define both subcommands and args")
 		}
-		if c.VariadicArgs {
+		if c.VariadicArgs != nil {
 			return errors.New("cannot define both subcommands and variadic args")
 		}
 	}
@@ -156,8 +169,8 @@ func (c *Command) ParametersAndTypes() string {
 			argsStr = append(argsStr, fmt.Sprintf("%s string", toCamelCase(argName)))
 		}
 	}
-	if c.VariadicArgs {
-		argsStr = append(argsStr, "vargs ...string")
+	if c.VariadicArgs != nil {
+		argsStr = append(argsStr, fmt.Sprintf("%s ...string", c.VariadicArgs.Name()))
 	}
 
 	return strings.Join(argsStr, ", ")
@@ -206,6 +219,7 @@ func (c *Command) ArgsLen() int {
 			len++
 		}
 	}
+
 	return len
 }
 
@@ -228,7 +242,7 @@ func (c *Command) Parameters(argsVarName string) string {
 			params = append(params, fmt.Sprintf("%s[%d]", argsVarName, i))
 		}
 	}
-	if c.VariadicArgs {
+	if c.VariadicArgs != nil {
 		params = append(params, fmt.Sprintf("%s[%d:]...", argsVarName, len(c.Args)))
 	}
 	return strings.Join(params, ", ")

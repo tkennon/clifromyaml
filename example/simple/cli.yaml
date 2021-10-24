@@ -4,7 +4,10 @@ run:
   args:
     - first: The first something to do simply
     - second: Another something
-  vargs: true
+  vargs:
+    type: somethings
+    min: 0
+    max: 4
   flags:
     wait:
       help: wait a bit before doing simple things

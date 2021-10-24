@@ -30,7 +30,7 @@ func (c *{{.ChainedName}}Command) usage() string {
     usage = append(usage, "<command>"){{end}}
     c.flags.VisitAll(appendFlagUsage(usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
-    {{end}}{{if .VariadicArgs}}usage = append(usage, "[<args>...]"){{end}}
+    {{end}}{{with .VariadicArgs}}usage = append(usage, "[<{{.Name}}>...]"){{end}}
     return strings.Join(usage, " ")
 }
 
