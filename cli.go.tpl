@@ -1,58 +1,44 @@
 {{define "command.tmpl"}}
-{{if eq (len .SubCommands) 0}}type {{title (toCamelCase .Name)}} interface {
-    Run{{if not .IsRoot}}{{title (toCamelCase .Name)}}{{end}}({{.ParametersAndTypes}}) error
+{{if eq (len .SubCommands) 0}}type {{title (.ChainedName)}} interface {
+    Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.ParametersAndTypes}}) error
 }
 {{end}}
-type {{toCamelCase .Name}}Command struct {
-    command
-    helpBuffer *bytes.Buffer{{if ne .Version ""}}
+type {{.ChainedName}}Command struct {
+    command{{if ne .Version ""}}
     version *bool{{end}}
     {{range $fname, $flag := .Flags}}{{toCamelCase $fname}} *{{$flag.Type}}
-    {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}} {{toCamelCase $cname}}Command
-    {{else}}{{toCamelCase .Name}} {{title (toCamelCase .Name)}}{{end}}
+    {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}} {{$command.ChainedName}}Command
+    {{else}}{{toCamelCase .Name}} {{title .ChainedName}}{{end}}
 }
 
-func new{{title (toCamelCase .Name)}}Command(w io.Writer, {{if eq (len .SubCommands) 0}}{{toCamelCase .Name}} {{title (toCamelCase .Name)}}{{else}}app Application{{end}}) {{toCamelCase .Name}}Command {
-    helpBuffer := new(bytes.Buffer)
-    flags := flag.NewFlagSet("{{.Name}}", flag.ContinueOnError)
-    flags.SetOutput(helpBuffer)
-
-    c := {{toCamelCase .Name}}Command{
-        command: newCommand(w, "{{.Help}}", flags),
-        helpBuffer: helpBuffer,{{if ne .Version ""}}
-        version: flags.Bool("version", false, "print version"),{{end}}
-        {{range $fname, $flag := .Flags}}{{toCamelCase $fname}}: flags.{{$flag.FlagFunc}}("{{$fname}}", {{$flag.DefaultArg}}, "{{$flag.Help}}"),
-        {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}}: new{{title (toCamelCase $cname)}}Command(w, app),
+func new{{title .ChainedName}}Command(w io.Writer, {{if eq (len .SubCommands) 0}}{{toCamelCase .Name}} {{title .ChainedName}}{{else}}app Application{{end}}) {{.ChainedName}}Command {
+    command := newCommand("{{.Name}}", "{{.Help}}", w)
+    c := {{.ChainedName}}Command{
+        command: command,{{if ne .Version ""}}
+        version: command.flags.Bool("version", false, "print version"),{{end}}
+        {{range $fname, $flag := .Flags}}{{toCamelCase $fname}}: command.flags.{{$flag.FlagFunc}}("{{$fname}}", {{$flag.DefaultArg}}, "{{$flag.Help}}"),
+        {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}}: new{{title $command.ChainedName}}Command(w, app),
         {{else}}{{toCamelCase .Name}}: {{toCamelCase .Name}},{{end}}
     }
-    flags.Usage = c.bufferHelp
+    c.flags.Usage = c.bufferHelp
 
     return c
 }
 
-func (c *{{toCamelCase .Name}}Command) usage() string {
-    usage := []string{
-        "Usage:",
-        {{if .IsRoot}}os.Args[0]{{else}}"{{.Name}}"{{end}},
-    }
+func (c *{{.ChainedName}}Command) usage() string {
+    usage := []string{"Usage:", "{{.Name}}"}
     {{if gt (len .SubCommands) 0}}subCommands := []string{
         {{range $cname, $command := .SubCommands}}"{{$cname}}",
         {{end}}
     }
     usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | "))){{end}}
-    c.flags.VisitAll(func(f *flag.Flag) {
-        flagArg := ""
-        if typ, _ := flag.UnquoteUsage(f); typ != "" {
-            flagArg = fmt.Sprintf(" <%s>", typ)
-        }
-        usage = append(usage, fmt.Sprintf("[-%s%s]", f.Name, flagArg))
-    })
+    c.flags.VisitAll(appendFlagUsage(usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
     {{end}}
     return strings.Join(usage, " ")
 }
 
-func (c *{{toCamelCase .Name}}Command) bufferHelp() {
+func (c *{{.ChainedName}}Command) bufferHelp() {
     fmt.Fprintln(c.helpBuffer, c.help)
     fmt.Fprintln(c.helpBuffer, c.usage())
     {{if gt (len .SubCommands) 0}}fmt.Fprintln(c.helpBuffer, "Sub-Commands:"){{end}}
@@ -64,19 +50,19 @@ func (c *{{toCamelCase .Name}}Command) bufferHelp() {
 	c.flags.PrintDefaults(){{end}}
 }
 
-func (c *{{toCamelCase .Name}}Command) writeHelp() error {
+func (c *{{.ChainedName}}Command) writeHelp() error {
     _, err := c.helpBuffer.WriteTo(c.w)
     return err
 }
 
 {{if ne .Version ""}}
-func (c *{{toCamelCase .Name}}Command) writeVersion() error {
+func (c *{{.ChainedName}}Command) writeVersion() error {
     _, err := fmt.Fprintln(c.w, "{{.Version}}")
     return err
 }
 {{end}}
 
-func (c *{{toCamelCase .Name}}Command) run(args []string) error {
+func (c *{{.ChainedName}}Command) run(args []string) error {
     {{if gt (len .SubCommands) 0}}if len(args) == 0 {
         return fmt.Errorf("sub-command required")
     }
@@ -101,14 +87,14 @@ func (c *{{toCamelCase .Name}}Command) run(args []string) error {
             return c.writeVersion()
         }{{end}}
         args = c.flags.Args()
-        {{if eq .VariadicArgs true}}return c.{{toCamelCase .Name}}.Run{{title (toCamelCase .Name)}}({{.Parameters}}){{else}}
+        {{if eq .VariadicArgs true}}return c.{{toCamelCase .Name}}.Run{{title .ChainedName}}({{.Parameters}}){{else}}
         if len(args) < {{len .Args}} {
             return fmt.Errorf("too few arguments to '{{.Name}}'; expected {{len .Args}}, but got %d", len(args))
         }
         if len(args) > {{len .Args}} {
             return fmt.Errorf("too many arguments to '{{.Name}}'; expected {{len .Args}}, but got %d", len(args))
         }
-        return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title (toCamelCase .Name)}}{{end}}({{.Parameters}}){{end}}
+        return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.Parameters}}){{end}}
     case flag.ErrHelp:
         return c.writeHelp()
     default:
@@ -117,9 +103,11 @@ func (c *{{toCamelCase .Name}}Command) run(args []string) error {
 }
 
 {{range $cname, $command := .SubCommands}}
-{{template "command.tmpl" ($command.WithName $cname)}}
+{{template "command.tmpl" $command}}
 {{end}}
 {{end}}
+{{define "application.tmpl"}}{{range $cname, $command := .SubCommands}}{{template "application.tmpl" $command}}{{else}}{{title .ChainedName}}
+{{end}}{{end}}
 // AUTOGENERATED -- DO NOT EDIT
 package {{.PackageName}}
 
@@ -133,29 +121,48 @@ import (
     {{if .StdlibPackageIsUsed "time"}}"time"{{end}}
 )
 
-type Application interface { {{range $cname, $command := .Command.SubCommands}}
-    {{title (toCamelCase $cname)}}{{else}}
-    Root{{end}}
+// Application defines the entrypoints to the application logic.
+type Application interface {
+    {{template "application.tmpl" .Command}}
 }
 
 type command struct {
     w io.Writer
     help string
+    helpBuffer *bytes.Buffer
     flags *flag.FlagSet
 }
 
-func newCommand(w io.Writer, help string, flags *flag.FlagSet) command {
+func newCommand(name string, help string, w io.Writer) command {
+    flags := flag.NewFlagSet(name, flag.ContinueOnError)
+    helpBuffer := new(bytes.Buffer)
+    flags.SetOutput(helpBuffer)
+
     return command{
         w: w,
         help: help,
+        helpBuffer: helpBuffer,
         flags: flags,
     }
 }
 
-{{template "command.tmpl" (.Command.WithName "root")}}
+// appendFlagUsage returns a function that appends a string describing the flags
+// usage to the slice passed in. The usage is of the form
+// `[-<flag name> <flag type>]`. For boolean flags the <flag type> is omitted.
+func appendFlagUsage(usage []string) func(f *flag.Flag) {
+    return func( f *flag.Flag) {
+        flagArg := ""
+        if typ, _ := flag.UnquoteUsage(f); typ != "" {
+            flagArg = fmt.Sprintf(" <%s>", typ)
+        }
+        usage = append(usage, fmt.Sprintf("[-%s%s]", f.Name, flagArg))
+    }
+}
+
+{{template "command.tmpl" .Command}}
 
 type CLI struct {
-    rootCommand rootCommand
+    {{toCamelCase .AppName}}Command {{toCamelCase .AppName}}Command
 }
 
 func NewCLI(app Application) *CLI {
@@ -164,10 +171,10 @@ func NewCLI(app Application) *CLI {
 
 func NewCLIWithWriter(w io.Writer, app Application) *CLI {
     return &CLI{
-        rootCommand: newRootCommand(w, app),
+        {{toCamelCase .AppName}}Command: new{{title (toCamelCase .AppName)}}Command(w, app),
     }
 }
 
 func (c *CLI) Run() error {
-    return c.rootCommand.run(os.Args[1:])
+    return c.{{toCamelCase .AppName}}Command.run(os.Args[1:])
 }

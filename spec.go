@@ -9,14 +9,16 @@ import (
 )
 
 type Specification struct {
-	*Command
-	Version string `yaml:"version"`
+	*Command `yaml:"run"`
+	AppName  string `yaml:"app"`
+	Version  string `yaml:"version"`
 }
 
 type Command struct {
 	isRoot       bool
 	version      string
-	Name         string
+	name         string
+	parentNames  []string
 	Help         string              `yaml:"help"`
 	Args         []map[string]string `yaml:"args"`
 	VariadicArgs bool                `yaml:"vargs"`
@@ -26,7 +28,6 @@ type Command struct {
 
 type Flag struct {
 	Help    string      `yaml:"help"`
-	Dash    string      `yaml:"dash"`
 	Default interface{} `yaml:"default"`
 }
 
@@ -54,6 +55,10 @@ func (s Specification) StdlibPackageIsUsed(pkg string) bool {
 	return s.Command.stdlibPackageIsUsed(pkg)
 }
 
+func (s Specification) setNames() {
+	s.Command.setNames(nil, s.AppName)
+}
+
 func (s Specification) validate() error {
 	if s.Command == nil {
 		return errors.New("no \"exec:\" defined")
@@ -69,8 +74,12 @@ func (c *Command) Version() string {
 	return c.version
 }
 
-func (c *Command) WithName(name string) *Command {
-	c.Name = name
+func (c *Command) Name() string {
+	return c.name
+}
+
+func (c *Command) WithName(prefix, name string) *Command {
+	c.name = prefix + name
 	return c
 }
 
@@ -148,6 +157,33 @@ func (c *Command) ParametersAndTypes() string {
 	}
 
 	return strings.Join(argsStr, ", ")
+}
+
+func (c *Command) setNames(parents []string, self string) {
+	c.parentNames = parents
+	c.name = self
+	for childName, command := range c.SubCommands {
+		command.setNames(append(parents, self), childName)
+	}
+}
+
+func (c *Command) ChainedName() string {
+	if len(c.parentNames) == 0 {
+		return toCamelCase(c.name)
+	}
+
+	var chainedName []string
+	first := true
+	for _, name := range c.parentNames {
+		if first {
+			first = false
+			chainedName = append(chainedName, toCamelCase(name))
+		} else {
+			chainedName = append(chainedName, strings.Title(toCamelCase(name)))
+		}
+	}
+	chainedName = append(chainedName, strings.Title(toCamelCase(c.name)))
+	return strings.Join(chainedName, "")
 }
 
 func orderedFlagNames(flags map[string]*Flag) []string {

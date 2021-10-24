@@ -13,8 +13,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+//go:generate clifromyaml -outfile cli.gen.go cli.yaml
+
 var (
-	//go:embed cli.go.tmpl
+	//go:embed cli.go.tpl
 	cliTemplate string
 )
 
@@ -31,6 +33,7 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 		return err
 	}
 	s.Command.version = s.Version
+	s.setNames()
 
 	if err := s.validate(); err != nil {
 		return err
@@ -50,8 +53,13 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 	}{s, packageName}
 
 	if dryRun {
-		return tmpl.Execute(io.Discard, v)
+		err := tmpl.Execute(io.Discard, v)
+		if err == nil {
+			fmt.Println("No problems found!")
+		}
+		return err
 	}
+
 	if outfile == "" {
 		return tmpl.Execute(os.Stdout, v)
 	}
