@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-//go:generate clifromyaml -outfile cli.go cli.yaml
+//go:generate clifromyaml cli.yaml
 
 type docker struct{}
 

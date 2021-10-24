@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//go:generate clifromyaml -outfile cli.go cli.yaml
+//go:generate clifromyaml cli.yaml
 
 type simple struct {
 	// Stuff

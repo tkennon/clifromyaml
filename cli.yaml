@@ -1,17 +1,21 @@
 app: clifromyaml
 version: ${CLIFROMYAML_VERSION}
 run:
-  help: Generate Golang CLI bindings from a YAML definition
+  help: Generate Golang CLI bindings from a YAML definition.
   args:
     - yaml-spec: the YAML file containing the CLI definition
   flags:
     package-name:
-      help: The package name to use for the generated Go bindings
+      help: The package name to use for the generated Go bindings.
       default: main
     outfile:
       help: The `file` that the generated CLI bindings should be written to. If
-            empty then they will be written to stdout.
+            empty then they will be written to <yaml-filename>.gen.go.
       default: ""
+    stdout:
+      help: Print the generated CLI bindings to stdout. Note that gofmt will not
+            be run on the output in this case.
+      default: false
     dry-run:
       help: Don't write the generated Go bindings anywhere, just parse the yaml
             and print any errors.

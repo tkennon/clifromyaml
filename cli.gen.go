@@ -49,7 +49,7 @@ func appendFlagUsage(usage []string) func(f *flag.Flag) {
 }
 
 type Clifromyaml interface {
-	Run(dryRun bool, outfile string, packageName string, yamlSpec string) error
+	Run(dryRun bool, outfile string, packageName string, stdout bool, yamlSpec string) error
 }
 
 type clifromyamlCommand struct {
@@ -58,17 +58,19 @@ type clifromyamlCommand struct {
 	dryRun      *bool
 	outfile     *string
 	packageName *string
+	stdout      *bool
 	clifromyaml Clifromyaml
 }
 
 func newClifromyamlCommand(w io.Writer, clifromyaml Clifromyaml) clifromyamlCommand {
-	command := newCommand("clifromyaml", "Generate Golang CLI bindings from a YAML definition", w)
+	command := newCommand("clifromyaml", "Generate Golang CLI bindings from a YAML definition.", w)
 	c := clifromyamlCommand{
 		command:     command,
 		version:     command.flags.Bool("version", false, "print version"),
 		dryRun:      command.flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
-		outfile:     command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to stdout."),
-		packageName: command.flags.String("package-name", "main", "The package name to use for the generated Go bindings"),
+		outfile:     command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-filename>.gen.go."),
+		packageName: command.flags.String("package-name", "main", "The package name to use for the generated Go bindings."),
+		stdout:      command.flags.Bool("stdout", false, "Print the generated CLI bindings to stdout. Note that gofmt will not be run on the output in this case."),
 		clifromyaml: clifromyaml,
 	}
 	c.flags.Usage = c.bufferHelp
@@ -117,7 +119,7 @@ func (c *clifromyamlCommand) run(args []string) error {
 		if len(args) > 1 {
 			return fmt.Errorf("'clifromyaml': too many arguments; expect 1, but got %d", len(args))
 		}
-		return c.clifromyaml.Run(*c.dryRun, *c.outfile, *c.packageName, args[0])
+		return c.clifromyaml.Run(*c.dryRun, *c.outfile, *c.packageName, *c.stdout, args[0])
 	case flag.ErrHelp:
 		return c.writeHelp()
 	default:

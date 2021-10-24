@@ -7,13 +7,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
 )
 
-//go:generate clifromyaml -outfile cli.gen.go cli.yaml
+//go:generate clifromyaml cli.yaml
 
 var (
 	//go:embed cli.go.tpl
@@ -22,7 +23,7 @@ var (
 
 type application struct{}
 
-func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec string) error {
+func (application) Run(dryRun bool, outfile string, packageName string, stdout bool, yamlSpec string) error {
 	b, err := os.ReadFile(yamlSpec)
 	if err != nil {
 		return err
@@ -47,28 +48,35 @@ func (application) Run(dryRun bool, outfile string, packageName string, yamlSpec
 		return err
 	}
 
+	var w io.Writer
+	switch {
+	case dryRun:
+		w = io.Discard
+	case stdout:
+		w = os.Stdout
+	default:
+		w = new(bytes.Buffer)
+	}
+
 	v := struct {
 		Specification
 		PackageName string
 	}{s, packageName}
+	if err := tmpl.Execute(w, v); err != nil {
+		return fmt.Errorf("error generating Go bindings from template: %w", err)
+	}
 
-	if dryRun {
-		err := tmpl.Execute(io.Discard, v)
-		if err == nil {
-			fmt.Println("No problems found!")
-		}
-		return err
+	if dryRun || stdout {
+		return nil
 	}
 
 	if outfile == "" {
-		return tmpl.Execute(os.Stdout, v)
+		filename := filepath.Base(yamlSpec)
+		filename = filename[:len(filename)-len(filepath.Ext(filename))] // trim the extension
+		outfile = filepath.Join(filepath.Dir(yamlSpec), fmt.Sprintf("%s.gen.go", filename))
 	}
 
-	buf := bytes.NewBuffer(nil)
-	if err := tmpl.Execute(buf, v); err != nil {
-		return err
-	}
-
+	buf := w.(*bytes.Buffer)
 	if err := os.WriteFile(outfile, buf.Bytes(), 0666); err != nil {
 		return err
 	}
