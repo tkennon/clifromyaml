@@ -35,8 +35,7 @@ run:
           help: Remove one or more containers
           args:
             - container: The container to remove
-          vargs:
-            type: containers
+          vargs: containers
           flags:
             force:
               help: Force the removal of a running container (uses SIGKILL)
@@ -51,8 +50,7 @@ run:
           help: Start one or more stopped containers
           args:
             - container: The container to start
-          vargs:
-            type: containers
+          vargs: containers
           flags:
             attach:
               help: Attach STDOUT/STDERR and forward signals
@@ -83,8 +81,7 @@ run:
                 in user by a container.
           args:
             - volume: The volume to remove
-          vargs:
-            type: volumes
+          vargs: volumes
           flags:
             force:
               help: Force the removal of one or more volumes
@@ -96,8 +93,7 @@ run:
           help: Display detailed information on one or more networks
           args:
             - network: The network to inspect
-          vargs:
-            type: networks
+          vargs: networks
           flags:
             format:
               help: Format the output using the given Go template

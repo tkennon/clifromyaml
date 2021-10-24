@@ -14,48 +14,6 @@ type Specification struct {
 	Command *Command `yaml:"run"`
 }
 
-type Command struct {
-	isRoot       bool
-	version      string
-	name         string
-	parentNames  []string
-	Help         string              `yaml:"help"`
-	Args         []map[string]string `yaml:"args"`
-	VariadicArgs *Vargs              `yaml:"vargs"`
-	Flags        map[string]*Flag    `yaml:"flags"`
-	SubCommands  map[string]*Command `yaml:"subcommands"`
-}
-
-type Flag struct {
-	Help    string      `yaml:"help"`
-	Default interface{} `yaml:"default"`
-}
-
-type Vargs struct {
-	Min  uint   `yaml:"min"`
-	Max  uint   `yaml:"max"`
-	Type string `yaml:"type"`
-}
-
-func (v *Vargs) Name() string {
-	if v != nil && v.Type != "" {
-		return v.Type
-	}
-	return "vargs"
-}
-
-func toCamelCase(in string) string {
-	var words []string
-	for i, word := range strings.Split(in, "-") {
-		if i != 0 {
-			word = strings.Title(word)
-		}
-		words = append(words, word)
-	}
-
-	return strings.Join(words, "")
-}
-
 func newSpecification() Specification {
 	return Specification{
 		Command: &Command{
@@ -64,15 +22,15 @@ func newSpecification() Specification {
 	}
 }
 
-func (s Specification) StdlibPackageIsUsed(pkg string) bool {
+func (s *Specification) StdlibPackageIsUsed(pkg string) bool {
 	return s.Command.stdlibPackageIsUsed(pkg)
 }
 
-func (s Specification) setNames() {
+func (s *Specification) setNames() {
 	s.Command.setNames(nil, s.AppName)
 }
 
-func (s Specification) validate() error {
+func (s *Specification) validate() error {
 	if s.AppName == "" {
 		return errors.New("no \"app\" defined")
 	}
@@ -85,6 +43,18 @@ func (s Specification) validate() error {
 	return nil
 }
 
+type Command struct {
+	isRoot       bool
+	version      string
+	name         string
+	parentNames  []string
+	Help         string              `yaml:"help"`
+	Args         []map[string]string `yaml:"args"`
+	VariadicArgs *string             `yaml:"vargs"`
+	Flags        map[string]*Flag    `yaml:"flags"`
+	SubCommands  map[string]*Command `yaml:"subcommands"`
+}
+
 func (c *Command) IsRoot() bool {
 	return c.isRoot
 }
@@ -95,11 +65,6 @@ func (c *Command) Version() string {
 
 func (c *Command) Name() string {
 	return c.name
-}
-
-func (c *Command) WithName(prefix, name string) *Command {
-	c.name = prefix + name
-	return c
 }
 
 func (c *Command) stdlibPackageIsUsed(pkg string) bool {
@@ -115,6 +80,14 @@ func (c *Command) stdlibPackageIsUsed(pkg string) bool {
 	}
 
 	return false
+}
+
+func (c *Command) setNames(parents []string, self string) {
+	c.parentNames = parents
+	c.name = self
+	for childName, command := range c.SubCommands {
+		command.setNames(append(parents, self), childName)
+	}
 }
 
 func (c *Command) validate() error {
@@ -150,6 +123,10 @@ func (c *Command) validate() error {
 		}
 	}
 
+	if c.VariadicArgs != nil && *c.VariadicArgs == "" {
+		return errors.New("must define the name of the vargs")
+	}
+
 	for name, flag := range c.Flags {
 		if err := flag.validate(); err != nil {
 			return fmt.Errorf("%q: %w", name, err)
@@ -159,38 +136,8 @@ func (c *Command) validate() error {
 	return nil
 }
 
-func (c *Command) ParametersAndTypes() string {
-	var argsStr []string
-	for _, name := range orderedFlagNames(c.Flags) {
-		argsStr = append(argsStr, fmt.Sprintf("%s %s", toCamelCase(name), c.Flags[name].Type()))
-	}
-	for _, arg := range c.Args {
-		for argName := range arg { // We know the arg map must contain only 1 key.
-			argsStr = append(argsStr, fmt.Sprintf("%s string", toCamelCase(argName)))
-		}
-	}
-	if c.VariadicArgs != nil {
-		argsStr = append(argsStr, fmt.Sprintf("%s ...string", c.VariadicArgs.Name()))
-	}
-
-	return strings.Join(argsStr, ", ")
-}
-
-func (c *Command) ParentNames() []string {
-	return c.parentNames
-}
-
 func (c *Command) Invocation() string {
-	s := append(c.parentNames, c.name)
-	return strings.Join(s, " ")
-}
-
-func (c *Command) setNames(parents []string, self string) {
-	c.parentNames = parents
-	c.name = self
-	for childName, command := range c.SubCommands {
-		command.setNames(append(parents, self), childName)
-	}
+	return strings.Join(append(c.parentNames, c.name), " ")
 }
 
 func (c *Command) ChainedName() string {
@@ -248,7 +195,29 @@ func (c *Command) Parameters(argsVarName string) string {
 	return strings.Join(params, ", ")
 }
 
-func (f Flag) Type() string {
+func (c *Command) ParametersAndTypes() string {
+	var argsStr []string
+	for _, name := range orderedFlagNames(c.Flags) {
+		argsStr = append(argsStr, fmt.Sprintf("%s %s", toCamelCase(name), c.Flags[name].Type()))
+	}
+	for _, arg := range c.Args {
+		for argName := range arg { // We know the arg map must contain only 1 key.
+			argsStr = append(argsStr, fmt.Sprintf("%s string", toCamelCase(argName)))
+		}
+	}
+	if c.VariadicArgs != nil {
+		argsStr = append(argsStr, fmt.Sprintf("%s ...string", *c.VariadicArgs))
+	}
+
+	return strings.Join(argsStr, ", ")
+}
+
+type Flag struct {
+	Help    string      `yaml:"help"`
+	Default interface{} `yaml:"default"`
+}
+
+func (f *Flag) Type() string {
 	switch f.Default.(type) {
 	case bool:
 		return "bool"
@@ -287,12 +256,12 @@ func (f Flag) Type() string {
 	}
 }
 
-func (f Flag) FlagFunc() string {
+func (f *Flag) FlagFunc() string {
 	flagFuncName := strings.Split(f.Type(), ".")
 	return strings.Title(flagFuncName[len(flagFuncName)-1])
 }
 
-func (f Flag) DefaultArg() interface{} {
+func (f *Flag) DefaultArg() interface{} {
 	if f.Default == nil {
 		// Assume it's a string.
 		return "\"\""
@@ -307,9 +276,21 @@ func (f Flag) DefaultArg() interface{} {
 	return fmt.Sprintf("%q", str)
 }
 
-func (f Flag) validate() error {
+func (f *Flag) validate() error {
 	if f.Default == nil {
 		return errors.New("flag default must be defined")
 	}
 	return nil
+}
+
+func toCamelCase(in string) string {
+	var words []string
+	for i, word := range strings.Split(in, "-") {
+		if i != 0 {
+			word = strings.Title(word)
+		}
+		words = append(words, word)
+	}
+
+	return strings.Join(words, "")
 }

@@ -140,7 +140,7 @@ func newDockerContainerCommand(w io.Writer, app Application) dockerContainerComm
 }
 
 func (c *dockerContainerCommand) usage() string {
-	usage := []string{"Usage:", "docker", "container"}
+	usage := []string{"Usage:", "docker container"}
 	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
@@ -220,7 +220,7 @@ func newDockerContainerLsCommand(w io.Writer, ls DockerContainerLs) dockerContai
 }
 
 func (c *dockerContainerLsCommand) usage() string {
-	usage := []string{"Usage:", "docker", "container", "ls"}
+	usage := []string{"Usage:", "docker container ls"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -285,7 +285,7 @@ func newDockerContainerRmCommand(w io.Writer, rm DockerContainerRm) dockerContai
 }
 
 func (c *dockerContainerRmCommand) usage() string {
-	usage := []string{"Usage:", "docker", "container", "rm"}
+	usage := []string{"Usage:", "docker container rm"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<container>")
 	usage = append(usage, "[<containers>...]")
@@ -351,7 +351,7 @@ func newDockerContainerStartCommand(w io.Writer, start DockerContainerStart) doc
 }
 
 func (c *dockerContainerStartCommand) usage() string {
-	usage := []string{"Usage:", "docker", "container", "start"}
+	usage := []string{"Usage:", "docker container start"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<container>")
 	usage = append(usage, "[<containers>...]")
@@ -407,7 +407,7 @@ func newDockerNetworkCommand(w io.Writer, app Application) dockerNetworkCommand 
 }
 
 func (c *dockerNetworkCommand) usage() string {
-	usage := []string{"Usage:", "docker", "network"}
+	usage := []string{"Usage:", "docker network"}
 	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
@@ -471,7 +471,7 @@ func newDockerNetworkInspectCommand(w io.Writer, inspect DockerNetworkInspect) d
 }
 
 func (c *dockerNetworkInspectCommand) usage() string {
-	usage := []string{"Usage:", "docker", "network", "inspect"}
+	usage := []string{"Usage:", "docker network inspect"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<network>")
 	usage = append(usage, "[<networks>...]")
@@ -529,7 +529,7 @@ func newDockerVolumeCommand(w io.Writer, app Application) dockerVolumeCommand {
 }
 
 func (c *dockerVolumeCommand) usage() string {
-	usage := []string{"Usage:", "docker", "volume"}
+	usage := []string{"Usage:", "docker volume"}
 	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
@@ -598,7 +598,7 @@ func newDockerVolumeLsCommand(w io.Writer, ls DockerVolumeLs) dockerVolumeLsComm
 }
 
 func (c *dockerVolumeLsCommand) usage() string {
-	usage := []string{"Usage:", "docker", "volume", "ls"}
+	usage := []string{"Usage:", "docker volume ls"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -659,7 +659,7 @@ func newDockerVolumeRmCommand(w io.Writer, rm DockerVolumeRm) dockerVolumeRmComm
 }
 
 func (c *dockerVolumeRmCommand) usage() string {
-	usage := []string{"Usage:", "docker", "volume", "rm"}
+	usage := []string{"Usage:", "docker volume rm"}
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<volume>")
 	usage = append(usage, "[<volumes>...]")

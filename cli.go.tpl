@@ -26,11 +26,11 @@ func new{{title .ChainedName}}Command(w io.Writer, {{if eq (len .SubCommands) 0}
 }
 
 func (c *{{.ChainedName}}Command) usage() string {
-    usage := []string{"Usage:", {{range $_, $pname := .ParentNames}}"{{$pname}}", {{end}}"{{.Name}}"}{{if gt (len .SubCommands) 0}}
+    usage := []string{"Usage:", "{{.Invocation}}"}{{if gt (len .SubCommands) 0}}
     usage = append(usage, "<command>"){{end}}
     c.flags.VisitAll(appendFlagUsage(usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
-    {{end}}{{with .VariadicArgs}}usage = append(usage, "[<{{.Name}}>...]"){{end}}
+    {{end}}{{with .VariadicArgs}}usage = append(usage, "[<{{.}}>...]"){{end}}
     return strings.Join(usage, " ")
 }
 

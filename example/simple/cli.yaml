@@ -1,14 +1,11 @@
 app: simple
 run:
-  help: A very simply application
+  help: A very simple application
   args:
     - first: The first something to do simply
     - second: Another something
-  vargs:
-    type: somethings
-    min: 0
-    max: 4
+  vargs: somethings
   flags:
     wait:
-      help: wait a bit before doing simple things
+      help: wait a bit before doing simple somethings
       default: 5s

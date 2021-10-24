@@ -60,10 +60,10 @@ type simpleCommand struct {
 }
 
 func newSimpleCommand(w io.Writer, simple Simple) simpleCommand {
-	command := newCommand("simple", "A very simply application", w)
+	command := newCommand("simple", "A very simple application", w)
 	c := simpleCommand{
 		command: command,
-		wait:    command.flags.Duration("wait", time.Duration(5000000000), "wait a bit before doing simple things"),
+		wait:    command.flags.Duration("wait", time.Duration(5000000000), "wait a bit before doing simple somethings"),
 		simple:  simple,
 	}
 	c.flags.Usage = c.bufferHelp

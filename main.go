@@ -59,9 +59,9 @@ func (application) Run(dryRun bool, outfile string, packageName string, stdout b
 	}
 
 	v := struct {
-		Specification
+		*Specification
 		PackageName string
-	}{s, packageName}
+	}{&s, packageName}
 	if err := tmpl.Execute(w, v); err != nil {
 		return fmt.Errorf("error generating Go bindings from template: %w", err)
 	}
@@ -81,7 +81,11 @@ func (application) Run(dryRun bool, outfile string, packageName string, stdout b
 		return err
 	}
 
-	return exec.Command("gofmt", "-w", outfile).Run()
+	if err := exec.Command("gofmt", "-w", outfile).Run(); err != nil {
+		return fmt.Errorf("gofmt failed: %w", err)
+	}
+
+	return nil
 }
 
 func main() {
