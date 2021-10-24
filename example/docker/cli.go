@@ -75,12 +75,7 @@ func newDockerCommand(w io.Writer, app Application) dockerCommand {
 
 func (c *dockerCommand) usage() string {
 	usage := []string{"Usage:", "docker"}
-	subCommands := []string{
-		"container",
-		"network",
-		"volume",
-	}
-	usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | ")))
+	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -89,7 +84,7 @@ func (c *dockerCommand) usage() string {
 func (c *dockerCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
-	fmt.Fprintln(c.helpBuffer, "\nSub-Commands:")
+	fmt.Fprintln(c.helpBuffer, "\nCommands:")
 	fmt.Fprintln(c.helpBuffer, "  container: Manage containers")
 	fmt.Fprintln(c.helpBuffer, "  network: Manage networks")
 	fmt.Fprintln(c.helpBuffer, "  volume: Manage volumes")
@@ -146,12 +141,7 @@ func newDockerContainerCommand(w io.Writer, app Application) dockerContainerComm
 
 func (c *dockerContainerCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container"}
-	subCommands := []string{
-		"ls",
-		"rm",
-		"start",
-	}
-	usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | ")))
+	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -160,7 +150,7 @@ func (c *dockerContainerCommand) usage() string {
 func (c *dockerContainerCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
-	fmt.Fprintln(c.helpBuffer, "\nSub-Commands:")
+	fmt.Fprintln(c.helpBuffer, "\nCommands:")
 	fmt.Fprintln(c.helpBuffer, "  ls: List containers")
 	fmt.Fprintln(c.helpBuffer, "  rm: Remove one or more containers")
 	fmt.Fprintln(c.helpBuffer, "  start: Start one or more stopped containers")
@@ -418,10 +408,7 @@ func newDockerNetworkCommand(w io.Writer, app Application) dockerNetworkCommand 
 
 func (c *dockerNetworkCommand) usage() string {
 	usage := []string{"Usage:", "docker", "network"}
-	subCommands := []string{
-		"inspect",
-	}
-	usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | ")))
+	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -430,7 +417,7 @@ func (c *dockerNetworkCommand) usage() string {
 func (c *dockerNetworkCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
-	fmt.Fprintln(c.helpBuffer, "\nSub-Commands:")
+	fmt.Fprintln(c.helpBuffer, "\nCommands:")
 	fmt.Fprintln(c.helpBuffer, "  inspect: Display detailed information on one or more networks")
 
 }
@@ -543,11 +530,7 @@ func newDockerVolumeCommand(w io.Writer, app Application) dockerVolumeCommand {
 
 func (c *dockerVolumeCommand) usage() string {
 	usage := []string{"Usage:", "docker", "volume"}
-	subCommands := []string{
-		"ls",
-		"rm",
-	}
-	usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | ")))
+	usage = append(usage, "<command>")
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -556,7 +539,7 @@ func (c *dockerVolumeCommand) usage() string {
 func (c *dockerVolumeCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
-	fmt.Fprintln(c.helpBuffer, "\nSub-Commands:")
+	fmt.Fprintln(c.helpBuffer, "\nCommands:")
 	fmt.Fprintln(c.helpBuffer, "  ls: List volumes")
 	fmt.Fprintln(c.helpBuffer, "  rm: Remove one or more volumes. You cannot remove a volume that is in user by a container.")
 
