@@ -231,7 +231,6 @@ func newDockerContainerLsCommand(w io.Writer, ls DockerContainerLs) dockerContai
 
 func (c *dockerContainerLsCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container", "ls"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -255,12 +254,11 @@ func (c *dockerContainerLsCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
-
 		if len(args) < 0 {
-			return fmt.Errorf("too few arguments to 'ls'; expected 0, but got %d", len(args))
+			return fmt.Errorf("'docker container ls': too few arguments; expect 0, but got %d", len(args))
 		}
 		if len(args) > 0 {
-			return fmt.Errorf("too many arguments to 'ls'; expected 0, but got %d", len(args))
+			return fmt.Errorf("'docker container ls': too many arguments; expect 0, but got %d", len(args))
 		}
 		return c.ls.RunDockerContainerLs(*c.all, *c.filter, *c.format, *c.last, *c.noTrunc, *c.quiet, *c.size)
 	case flag.ErrHelp:
@@ -271,7 +269,7 @@ func (c *dockerContainerLsCommand) run(args []string) error {
 }
 
 type DockerContainerRm interface {
-	RunDockerContainerRm(force bool, link bool, volumes bool, vargs ...string) error
+	RunDockerContainerRm(force bool, link bool, volumes bool, container string, vargs ...string) error
 }
 
 type dockerContainerRmCommand struct {
@@ -298,9 +296,8 @@ func newDockerContainerRmCommand(w io.Writer, rm DockerContainerRm) dockerContai
 
 func (c *dockerContainerRmCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container", "rm"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
-
+	usage = append(usage, "<container>")
 	usage = append(usage, "[<args>...]")
 	return strings.Join(usage, " ")
 }
@@ -309,6 +306,8 @@ func (c *dockerContainerRmCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
 
+	fmt.Fprintf(c.helpBuffer, "\nArguments:\n")
+	fmt.Fprintln(c.helpBuffer, "  container: The container to remove")
 	fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults()
 }
@@ -323,7 +322,11 @@ func (c *dockerContainerRmCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
-		return c.rm.RunDockerContainerRm(*c.force, *c.link, *c.volumes, args...)
+		if len(args) < 1 {
+			return fmt.Errorf("'docker container rm': too few arguments; expect 1 or more, but got %d", len(args))
+		}
+
+		return c.rm.RunDockerContainerRm(*c.force, *c.link, *c.volumes, args[0], args[1:]...)
 	case flag.ErrHelp:
 		return c.writeHelp()
 	default:
@@ -332,7 +335,7 @@ func (c *dockerContainerRmCommand) run(args []string) error {
 }
 
 type DockerContainerStart interface {
-	RunDockerContainerStart(attach bool, detachKeys string, interactive bool, vargs ...string) error
+	RunDockerContainerStart(attach bool, detachKeys string, interactive bool, container string, vargs ...string) error
 }
 
 type dockerContainerStartCommand struct {
@@ -359,9 +362,8 @@ func newDockerContainerStartCommand(w io.Writer, start DockerContainerStart) doc
 
 func (c *dockerContainerStartCommand) usage() string {
 	usage := []string{"Usage:", "docker", "container", "start"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
-
+	usage = append(usage, "<container>")
 	usage = append(usage, "[<args>...]")
 	return strings.Join(usage, " ")
 }
@@ -370,6 +372,8 @@ func (c *dockerContainerStartCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
 
+	fmt.Fprintf(c.helpBuffer, "\nArguments:\n")
+	fmt.Fprintln(c.helpBuffer, "  container: The container to start")
 	fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults()
 }
@@ -384,7 +388,11 @@ func (c *dockerContainerStartCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
-		return c.start.RunDockerContainerStart(*c.attach, *c.detachKeys, *c.interactive, args...)
+		if len(args) < 1 {
+			return fmt.Errorf("'docker container start': too few arguments; expect 1 or more, but got %d", len(args))
+		}
+
+		return c.start.RunDockerContainerStart(*c.attach, *c.detachKeys, *c.interactive, args[0], args[1:]...)
 	case flag.ErrHelp:
 		return c.writeHelp()
 	default:
@@ -452,7 +460,7 @@ func (c *dockerNetworkCommand) run(args []string) error {
 }
 
 type DockerNetworkInspect interface {
-	RunDockerNetworkInspect(format string, verbose bool) error
+	RunDockerNetworkInspect(format string, verbose bool, network string, vargs ...string) error
 }
 
 type dockerNetworkInspectCommand struct {
@@ -477,9 +485,9 @@ func newDockerNetworkInspectCommand(w io.Writer, inspect DockerNetworkInspect) d
 
 func (c *dockerNetworkInspectCommand) usage() string {
 	usage := []string{"Usage:", "docker", "network", "inspect"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
-
+	usage = append(usage, "<network>")
+	usage = append(usage, "[<args>...]")
 	return strings.Join(usage, " ")
 }
 
@@ -487,6 +495,8 @@ func (c *dockerNetworkInspectCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
 
+	fmt.Fprintf(c.helpBuffer, "\nArguments:\n")
+	fmt.Fprintln(c.helpBuffer, "  network: The network to inspect")
 	fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults()
 }
@@ -501,14 +511,11 @@ func (c *dockerNetworkInspectCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
+		if len(args) < 1 {
+			return fmt.Errorf("'docker network inspect': too few arguments; expect 1 or more, but got %d", len(args))
+		}
 
-		if len(args) < 0 {
-			return fmt.Errorf("too few arguments to 'inspect'; expected 0, but got %d", len(args))
-		}
-		if len(args) > 0 {
-			return fmt.Errorf("too many arguments to 'inspect'; expected 0, but got %d", len(args))
-		}
-		return c.inspect.RunDockerNetworkInspect(*c.format, *c.verbose)
+		return c.inspect.RunDockerNetworkInspect(*c.format, *c.verbose, args[0], args[1:]...)
 	case flag.ErrHelp:
 		return c.writeHelp()
 	default:
@@ -609,7 +616,6 @@ func newDockerVolumeLsCommand(w io.Writer, ls DockerVolumeLs) dockerVolumeLsComm
 
 func (c *dockerVolumeLsCommand) usage() string {
 	usage := []string{"Usage:", "docker", "volume", "ls"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
 
 	return strings.Join(usage, " ")
@@ -633,12 +639,11 @@ func (c *dockerVolumeLsCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
-
 		if len(args) < 0 {
-			return fmt.Errorf("too few arguments to 'ls'; expected 0, but got %d", len(args))
+			return fmt.Errorf("'docker volume ls': too few arguments; expect 0, but got %d", len(args))
 		}
 		if len(args) > 0 {
-			return fmt.Errorf("too many arguments to 'ls'; expected 0, but got %d", len(args))
+			return fmt.Errorf("'docker volume ls': too many arguments; expect 0, but got %d", len(args))
 		}
 		return c.ls.RunDockerVolumeLs(*c.filter, *c.format, *c.quiet)
 	case flag.ErrHelp:
@@ -649,7 +654,7 @@ func (c *dockerVolumeLsCommand) run(args []string) error {
 }
 
 type DockerVolumeRm interface {
-	RunDockerVolumeRm(force bool, vargs ...string) error
+	RunDockerVolumeRm(force bool, volume string, vargs ...string) error
 }
 
 type dockerVolumeRmCommand struct {
@@ -672,9 +677,8 @@ func newDockerVolumeRmCommand(w io.Writer, rm DockerVolumeRm) dockerVolumeRmComm
 
 func (c *dockerVolumeRmCommand) usage() string {
 	usage := []string{"Usage:", "docker", "volume", "rm"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
-
+	usage = append(usage, "<volume>")
 	usage = append(usage, "[<args>...]")
 	return strings.Join(usage, " ")
 }
@@ -683,6 +687,8 @@ func (c *dockerVolumeRmCommand) bufferHelp() {
 	fmt.Fprintf(c.helpBuffer, "%s\n\n", c.help)
 	fmt.Fprintf(c.helpBuffer, "%s\n", c.usage())
 
+	fmt.Fprintf(c.helpBuffer, "\nArguments:\n")
+	fmt.Fprintln(c.helpBuffer, "  volume: The volume to remove")
 	fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults()
 }
@@ -697,7 +703,11 @@ func (c *dockerVolumeRmCommand) run(args []string) error {
 	case nil:
 
 		args = c.flags.Args()
-		return c.rm.RunDockerVolumeRm(*c.force, args...)
+		if len(args) < 1 {
+			return fmt.Errorf("'docker volume rm': too few arguments; expect 1 or more, but got %d", len(args))
+		}
+
+		return c.rm.RunDockerVolumeRm(*c.force, args[0], args[1:]...)
 	case flag.ErrHelp:
 		return c.writeHelp()
 	default:

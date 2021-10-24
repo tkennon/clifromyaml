@@ -26,16 +26,15 @@ func new{{title .ChainedName}}Command(w io.Writer, {{if eq (len .SubCommands) 0}
 }
 
 func (c *{{.ChainedName}}Command) usage() string {
-    usage := []string{"Usage:", {{range $_, $pname := .ParentNames}}"{{$pname}}", {{end}}"{{.Name}}"}
-    {{if gt (len .SubCommands) 0}}subCommands := []string{
+    usage := []string{"Usage:", {{range $_, $pname := .ParentNames}}"{{$pname}}", {{end}}"{{.Name}}"}{{if gt (len .SubCommands) 0}}
+    subCommands := []string{
         {{range $cname, $command := .SubCommands}}"{{$cname}}",
         {{end}}
     }
     usage = append(usage, fmt.Sprintf("{%s}", strings.Join(subCommands, " | "))){{end}}
     c.flags.VisitAll(appendFlagUsage(usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
-    {{end}}
-    {{if .VariadicArgs}}usage = append(usage, "[<args>...]"){{end}}
+    {{end}}{{if .VariadicArgs}}usage = append(usage, "[<args>...]"){{end}}
     return strings.Join(usage, " ")
 }
 
@@ -45,7 +44,7 @@ func (c *{{.ChainedName}}Command) bufferHelp() {
     {{if gt (len .SubCommands) 0}}fmt.Fprintln(c.helpBuffer, "\nSub-Commands:"){{end}}
     {{range $cname, $command := .SubCommands}}fmt.Fprintln(c.helpBuffer, "  {{$cname}}: {{$command.Help}}")
     {{end}}
-    {{if gt (len .Args) 0}}fmt.Fprintf(c.helpBuffer, "\nArguments:\n"){{end}}
+    {{if gt .ArgsLen 0}}fmt.Fprintf(c.helpBuffer, "\nArguments:\n"){{end}}
     {{range .Args}}{{range $argName, $help := .}}fmt.Fprintln(c.helpBuffer, "  {{$argName}}: {{$help}}"){{end}}
     {{end}}{{if gt (len .Flags) 0}}fmt.Fprintf(c.helpBuffer, "\nFlags:\n")
 	c.flags.PrintDefaults(){{end}}
@@ -88,12 +87,12 @@ func (c *{{.ChainedName}}Command) run(args []string) error {
             return c.writeVersion()
         }{{end}}
         args = c.flags.Args()
-        {{if gt (len .Args) 0}}if len(args) < {{len .Args}} {
-            return fmt.Errorf("too few arguments to '{{.Name}}'; expected {{len .Args}}{{if .VariadicArgs}} or more{{end}}, but got %d", len(args))
+        if len(args) < {{.ArgsLen}} {
+            return fmt.Errorf("'{{.Invocation}}': too few arguments; expect {{.ArgsLen}}{{if .VariadicArgs}} or more{{end}}, but got %d", len(args))
         }
-        {{if not .VariadicArgs}}if len(args) > {{len .Args}} {
-            return fmt.Errorf("too many arguments to '{{.Name}}'; expected {{len .Args}}, but got %d", len(args))
-        }{{end}}{{end}}
+        {{if not .VariadicArgs}}if len(args) > {{.ArgsLen}} {
+            return fmt.Errorf("'{{.Invocation}}': too many arguments; expect {{.ArgsLen}}, but got %d", len(args))
+        }{{end}}
         return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.Parameters "args"}})
     case flag.ErrHelp:
         return c.writeHelp()

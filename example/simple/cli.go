@@ -73,11 +73,9 @@ func newSimpleCommand(w io.Writer, simple Simple) simpleCommand {
 
 func (c *simpleCommand) usage() string {
 	usage := []string{"Usage:", "simple"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<first>")
 	usage = append(usage, "<second>")
-
 	usage = append(usage, "[<args>...]")
 	return strings.Join(usage, " ")
 }
@@ -104,7 +102,7 @@ func (c *simpleCommand) run(args []string) error {
 
 		args = c.flags.Args()
 		if len(args) < 2 {
-			return fmt.Errorf("too few arguments to 'simple'; expected 2 or more, but got %d", len(args))
+			return fmt.Errorf("'simple': too few arguments; expect 2 or more, but got %d", len(args))
 		}
 
 		return c.simple.Run(*c.wait, args[0], args[1], args[2:]...)

@@ -7,6 +7,8 @@ run:
       subcommands:
         ls:
           help: List containers
+          args:
+           - null
           flags:
             all:
               help: Show all containers (default shows just running containers)
@@ -31,6 +33,9 @@ run:
               default: false
         rm:
           help: Remove one or more containers
+          args:
+            - container: The container to remove
+          vargs: true
           flags:
             force:
               help: Force the removal of a running container (uses SIGKILL)
@@ -41,9 +46,11 @@ run:
             volumes:
               help: Remove anonymous volumes associated with the container
               default: false
-          vargs: true
         start:
           help: Start one or more stopped containers
+          args:
+            - container: The container to start
+          vargs: true
           flags:
             attach:
               help: Attach STDOUT/STDERR and forward signals
@@ -54,7 +61,6 @@ run:
             interactive:
               help: Attach container's STDIN
               default: false
-          vargs: true
     volume:
       help: Manage volumes
       subcommands:
@@ -73,16 +79,21 @@ run:
         rm:
           help: Remove one or more volumes. You cannot remove a volume that is
                 in user by a container.
+          args:
+            - volume: The volume to remove
+          vargs: true
           flags:
             force:
               help: Force the removal of one or more volumes
               default: false
-          vargs: true
     network:
       help: Manage networks
       subcommands:
         inspect:
           help: Display detailed information on one or more networks
+          args:
+            - network: The network to inspect
+          vargs: true
           flags:
             format:
               help: Format the output using the given Go template

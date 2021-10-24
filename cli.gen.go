@@ -78,7 +78,6 @@ func newClifromyamlCommand(w io.Writer, clifromyaml Clifromyaml) clifromyamlComm
 
 func (c *clifromyamlCommand) usage() string {
 	usage := []string{"Usage:", "clifromyaml"}
-
 	c.flags.VisitAll(appendFlagUsage(usage))
 	usage = append(usage, "<yaml-spec>")
 
@@ -112,12 +111,11 @@ func (c *clifromyamlCommand) run(args []string) error {
 			return c.writeVersion()
 		}
 		args = c.flags.Args()
-
 		if len(args) < 1 {
-			return fmt.Errorf("too few arguments to 'clifromyaml'; expected 1, but got %d", len(args))
+			return fmt.Errorf("'clifromyaml': too few arguments; expect 1, but got %d", len(args))
 		}
 		if len(args) > 1 {
-			return fmt.Errorf("too many arguments to 'clifromyaml'; expected 1, but got %d", len(args))
+			return fmt.Errorf("'clifromyaml': too many arguments; expect 1, but got %d", len(args))
 		}
 		return c.clifromyaml.Run(*c.dryRun, *c.outfile, *c.packageName, args[0])
 	case flag.ErrHelp:

@@ -125,7 +125,7 @@ func (c *Command) validate() error {
 	}
 
 	for _, arg := range c.Args {
-		if len(arg) != 1 {
+		if len(arg) > 1 {
 			return errors.New("arg mapping must be exactly one key to one value")
 		}
 		for flagName := range c.Flags {
@@ -167,6 +167,11 @@ func (c *Command) ParentNames() []string {
 	return c.parentNames
 }
 
+func (c *Command) Invocation() string {
+	s := append(c.parentNames, c.name)
+	return strings.Join(s, " ")
+}
+
 func (c *Command) setNames(parents []string, self string) {
 	c.parentNames = parents
 	c.name = self
@@ -194,6 +199,16 @@ func (c *Command) ChainedName() string {
 	return strings.Join(chainedName, "")
 }
 
+func (c *Command) ArgsLen() int {
+	len := 0
+	for _, arg := range c.Args {
+		if arg != nil {
+			len++
+		}
+	}
+	return len
+}
+
 func orderedFlagNames(flags map[string]*Flag) []string {
 	var names []string
 	for name := range flags {
@@ -208,8 +223,10 @@ func (c *Command) Parameters(argsVarName string) string {
 	for _, name := range orderedFlagNames(c.Flags) {
 		params = append(params, fmt.Sprintf("*c.%s", toCamelCase(name)))
 	}
-	for i := range c.Args {
-		params = append(params, fmt.Sprintf("%s[%d]", argsVarName, i))
+	for i, args := range c.Args {
+		if args != nil {
+			params = append(params, fmt.Sprintf("%s[%d]", argsVarName, i))
+		}
 	}
 	if c.VariadicArgs {
 		params = append(params, fmt.Sprintf("%s[%d:]...", argsVarName, len(c.Args)))
