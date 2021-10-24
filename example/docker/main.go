@@ -11,18 +11,18 @@ func (*docker) RunDockerContainerLs(all bool, filter string, format string, last
 	return nil
 }
 
-func (*docker) RunDockerContainerRm(force bool, link bool, volumes bool, container string, vargs ...string) error {
-	fmt.Printf("RunDockerContainerRm: force=%t, link=%t, volumes=%t, container=%q, vargs=%v\n", force, link, volumes, container, vargs)
+func (*docker) RunDockerContainerRm(force bool, link bool, volumes bool, container string, containers ...string) error {
+	fmt.Printf("RunDockerContainerRm: force=%t, link=%t, volumes=%t, container=%q, containers=%v\n", force, link, volumes, container, containers)
 	return nil
 }
 
-func (*docker) RunDockerContainerStart(attach bool, detachKeys string, interactive bool, container string, vargs ...string) error {
-	fmt.Printf("RunDockerContainerStart: attach=%t, detachKeys=%q, interactive=%t, container=%q, vargs=%v\n", attach, detachKeys, interactive, container, vargs)
+func (*docker) RunDockerContainerStart(attach bool, detachKeys string, interactive bool, container string, containers ...string) error {
+	fmt.Printf("RunDockerContainerStart: attach=%t, detachKeys=%q, interactive=%t, container=%q, containers=%v\n", attach, detachKeys, interactive, container, containers)
 	return nil
 }
 
-func (*docker) RunDockerNetworkInspect(format string, verbose bool, network string, vargs ...string) error {
-	fmt.Printf("RunDockerNetworkInspect: format=%q, verbose=%t, network=%q, vargs=%v\n", format, verbose, network, vargs)
+func (*docker) RunDockerNetworkInspect(format string, verbose bool, network string, networks ...string) error {
+	fmt.Printf("RunDockerNetworkInspect: format=%q, verbose=%t, network=%q, networkss=%v\n", format, verbose, network, networks)
 	return nil
 }
 
@@ -31,8 +31,8 @@ func (*docker) RunDockerVolumeLs(filter string, format string, quiet bool) error
 	return nil
 }
 
-func (*docker) RunDockerVolumeRm(force bool, volume string, vargs ...string) error {
-	fmt.Printf("RunDockerVolumeRm: force=%t, volume=%q, vargs=%v\n", force, volume, vargs)
+func (*docker) RunDockerVolumeRm(force bool, volume string, volumes ...string) error {
+	fmt.Printf("RunDockerVolumeRm: force=%t, volume=%q, volumess=%v\n", force, volume, volumes)
 	return nil
 }
 
