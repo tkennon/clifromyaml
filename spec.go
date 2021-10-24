@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -60,6 +61,14 @@ func (c *Command) IsRoot() bool {
 }
 
 func (c *Command) Version() string {
+	if c.version == "" {
+		return ""
+	}
+	if strings.HasPrefix(c.version, "${") && strings.HasSuffix(c.version, "}") {
+		inner := c.version[2 : len(c.version)-1]
+		inner = strings.TrimSpace(inner)
+		return os.Getenv(inner)
+	}
 	return c.version
 }
 

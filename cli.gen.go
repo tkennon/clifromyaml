@@ -102,7 +102,7 @@ func (c *clifromyamlCommand) writeHelp() error {
 }
 
 func (c *clifromyamlCommand) writeVersion() error {
-	_, err := fmt.Fprintln(c.w, "${CLIFROMYAML_VERSION}")
+	_, err := fmt.Fprintln(c.w, "0.0.1")
 	return err
 }
 
