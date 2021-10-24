@@ -113,6 +113,30 @@ Doing bar for: [a b c d e f g h i j k l m n o p]
 Check out the  `example/` directory for further examples. Also checkout
 `cli.yaml` which defines the CLI used for `clifromyaml` itself.
 
+## Usage
+
+```shell
+$ clifromyaml --help
+Generate Golang CLI bindings from a YAML definition.
+
+Usage: clifromyaml <yaml-spec>
+
+Arguments:
+  yaml-spec: the YAML file containing the CLI definition
+
+Flags:
+  -dry-run
+        Don't write the generated Go bindings anywhere, just parse the yaml and print any errors.
+  -outfile file
+        The file that the generated CLI bindings should be written to. If empty then they will be written to <yaml-filename>.gen.go.
+  -package-name string
+        The package name to use for the generated Go bindings. (default "main")
+  -stdout
+        Print the generated CLI bindings to stdout. Note that gofmt will not be run on the output in this case.
+  -version
+        print version
+```
+
 ## Yaml specification
 
 ```yaml
