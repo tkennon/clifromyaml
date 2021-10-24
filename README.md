@@ -6,11 +6,13 @@ on with the interesting bits of coding: application logic.
 
 ## Install
 
-`go get github.com/tkennon/clifromyaml`
+`go get github.com/tkennon/clifromyaml` and make sure that `~/go/bin` is in your
+PATH.
 
 ## Example
 
 Define a CLI in a yaml file
+
 ```yaml
 app: example
 command:
@@ -35,6 +37,7 @@ command:
 
 Generate the stubs in `main.go` and then pass the CLI your application type
 (that implements the generted `Application` interface).
+
 ```go
 package main
 
@@ -66,7 +69,9 @@ func main() {
 	}
 }
 ```
+
 When built (`go generate; go build`), this runs as
+
 ```shell
 $ ./example -h
 This is my application to do stuff
@@ -77,6 +82,7 @@ Commands:
   bar: Do lots of bar
   foo: Do a foo
 ```
+
 ```shell
 $ ./example foo -h
 Do a foo
@@ -93,10 +99,12 @@ Flags:
   -wait duration
         wait a bit before writing to the output (default 5s)
 ```
+
 ```shell
 $ ./example foo -wait 2m first second
 Doing foo: dryRun: false, wait: 2m0s, in: first, out: second
 ```
+
 ```shell
 $ ./example bar a b c d e f g h i j k l m n o p
 Doing bar for: [a b c d e f g h i j k l m n o p]
