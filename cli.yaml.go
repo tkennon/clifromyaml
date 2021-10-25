@@ -54,7 +54,6 @@ type Clifromyaml interface {
 
 type clifromyamlCommand struct {
 	command
-	version     *bool
 	dryRun      *bool
 	outfile     *string
 	packageName *string
@@ -66,11 +65,10 @@ func newClifromyamlCommand(w io.Writer, clifromyaml Clifromyaml) clifromyamlComm
 	command := newCommand("clifromyaml", "Generate Golang CLI bindings from a YAML definition.", w)
 	c := clifromyamlCommand{
 		command:     command,
-		version:     command.flags.Bool("version", false, "print version"),
 		dryRun:      command.flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
-		outfile:     command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-filename>.gen.go."),
+		outfile:     command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.go."),
 		packageName: command.flags.String("package-name", "main", "The package name to use for the generated Go bindings."),
-		stdout:      command.flags.Bool("stdout", false, "Print the generated CLI bindings to stdout. Note that gofmt will not be run on the output in this case."),
+		stdout:      command.flags.Bool("stdout", false, "Print the generated CLI bindings to stdout."),
 		clifromyaml: clifromyaml,
 	}
 	c.flags.Usage = c.bufferHelp
@@ -101,17 +99,10 @@ func (c *clifromyamlCommand) writeHelp() error {
 	return err
 }
 
-func (c *clifromyamlCommand) writeVersion() error {
-	_, err := fmt.Fprintln(c.w, "0.0.1")
-	return err
-}
-
 func (c *clifromyamlCommand) run(args []string) error {
 	switch err := c.flags.Parse(args); err {
 	case nil:
-		if *c.version {
-			return c.writeVersion()
-		}
+
 		args = c.flags.Args()
 		if len(args) < 1 {
 			return fmt.Errorf("'clifromyaml': too few arguments; expect 1, but got %d", len(args))

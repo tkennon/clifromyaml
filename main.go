@@ -4,10 +4,8 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io"
+	"go/format"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -26,12 +24,12 @@ type application struct{}
 func (application) Run(dryRun bool, outfile string, packageName string, stdout bool, yamlSpec string) error {
 	b, err := os.ReadFile(yamlSpec)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read YAML CLI definition: %w", err)
 	}
 
 	s := newSpecification()
 	if err := yaml.Unmarshal(b, &s); err != nil {
-		return err
+		return fmt.Errorf("unable to unmarshal YAML definition: %w", err)
 	}
 	s.Command.version = s.Version
 	s.setNames()
@@ -45,44 +43,35 @@ func (application) Run(dryRun bool, outfile string, packageName string, stdout b
 		"title":       strings.Title,
 	}).Parse(cliTemplate)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	var w io.Writer
-	switch {
-	case dryRun:
-		w = io.Discard
-	case stdout:
-		w = os.Stdout
-	default:
-		w = new(bytes.Buffer)
-	}
-
+	buf := new(bytes.Buffer)
 	v := struct {
 		*Specification
 		PackageName string
 	}{&s, packageName}
-	if err := tmpl.Execute(w, v); err != nil {
+	if err := tmpl.Execute(buf, v); err != nil {
 		return fmt.Errorf("error generating Go bindings from template: %w", err)
 	}
 
-	if dryRun || stdout {
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("could not gofmt generated Go binding: %w", err)
+	}
+
+	switch {
+	case dryRun:
 		return nil
+	case stdout:
+		fmt.Println(string(formatted))
+		return nil
+	case outfile == "":
+		outfile = fmt.Sprintf("%s.go", yamlSpec)
 	}
 
-	if outfile == "" {
-		filename := filepath.Base(yamlSpec)
-		filename = filename[:len(filename)-len(filepath.Ext(filename))] // trim the extension
-		outfile = filepath.Join(filepath.Dir(yamlSpec), fmt.Sprintf("%s.gen.go", filename))
-	}
-
-	buf := w.(*bytes.Buffer)
-	if err := os.WriteFile(outfile, buf.Bytes(), 0666); err != nil {
-		return err
-	}
-
-	if err := exec.Command("gofmt", "-w", outfile).Run(); err != nil {
-		return fmt.Errorf("gofmt failed: %w", err)
+	if err := os.WriteFile(outfile, formatted, 0666); err != nil {
+		return fmt.Errorf("failed to write output file: %w", err)
 	}
 
 	return nil
