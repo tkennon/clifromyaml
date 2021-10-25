@@ -128,7 +128,7 @@ Flags:
   -dry-run
         Don't write the generated Go bindings anywhere, just parse the yaml and print any errors.
   -outfile file
-        The file that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.gen.go.
+        The file that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.go.
   -package-name string
         The package name to use for the generated Go bindings. (default "main")
   -stdout
