@@ -186,20 +186,27 @@ func appendFlagUsage(usage []string) func(f *flag.Flag) {
 
 {{template "command.tmpl" .Command}}
 
+// CLI is the Command Line Interface for {{.AppName}}.
 type CLI struct {
     {{toCamelCase .AppName}}Command {{toCamelCase .AppName}}Command
 }
 
+// NewCLI returns a new CLI that parses all flags and arguments from the command
+// line and invokes the corresponding Application method.
 func NewCLI(app Application) *CLI {
     return NewCLIWithWriter(os.Stdout, app)
 }
 
+// NewCLIWithWriter is like NewCLI, but any output is written to w instead of
+// stdout.
 func NewCLIWithWriter(w io.Writer, app Application) *CLI {
     return &CLI{
         {{toCamelCase .AppName}}Command: new{{title (toCamelCase .AppName)}}Command(w, app),
     }
 }
 
+// Run runs the CLI. It parses all flags and arguments and attempts to invoke to
+// corresponding method of Application.
 func (c *CLI) Run() error {
     return c.{{toCamelCase .AppName}}Command.run(os.Args[1:])
 }

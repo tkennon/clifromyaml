@@ -54,28 +54,102 @@ type Clifromyaml interface {
 
 type clifromyamlCommand struct {
 	command
-	version     *bool
-	dryRun      *bool
-	outfile     *string
-	packageName *string
-	stdout      *bool
-	clifromyaml Clifromyaml
+	version            *bool
+	dryRun             *bool
+	dryRunChoices      []bool
+	outfile            *string
+	outfileChoices     []string
+	packageName        *string
+	packageNameChoices []string
+	stdout             *bool
+	stdoutChoices      []bool
+	clifromyaml        Clifromyaml
 }
 
 func newClifromyamlCommand(w io.Writer, clifromyaml Clifromyaml) clifromyamlCommand {
 	command := newCommand("clifromyaml", "Generate Golang CLI bindings from a YAML definition.", w)
 	c := clifromyamlCommand{
-		command:     command,
-		version:     command.flags.Bool("version", false, "print version"),
-		dryRun:      command.flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
-		outfile:     command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.go."),
-		packageName: command.flags.String("package-name", "main", "The package name to use for the generated Go bindings."),
-		stdout:      command.flags.Bool("stdout", false, "Print the generated CLI bindings to stdout."),
-		clifromyaml: clifromyaml,
+		command:            command,
+		version:            command.flags.Bool("version", false, "print version"),
+		dryRun:             command.flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
+		dryRunChoices:      nil,
+		outfile:            command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.go."),
+		outfileChoices:     nil,
+		packageName:        command.flags.String("package-name", "main", "The package name to use for the generated Go bindings."),
+		packageNameChoices: nil,
+		stdout:             command.flags.Bool("stdout", false, "Print the generated CLI bindings to stdout."),
+		stdoutChoices:      nil,
+		clifromyaml:        clifromyaml,
 	}
 	c.flags.Usage = c.bufferHelp
 
 	return c
+}
+
+func (c *clifromyamlCommand) validateFlags() error {
+	if err := func() error {
+		if len(c.dryRunChoices) == 0 {
+			return nil
+		}
+		for _, choice := range c.dryRunChoices {
+			if choice == *c.dryRun {
+				return nil
+			}
+		}
+		return fmt.Errorf("'dry-run' must be one of %v", c.dryRunChoices)
+	}(); err != nil {
+		return err
+	}
+	if err := func() error {
+		if len(c.outfileChoices) == 0 {
+			return nil
+		}
+		for _, choice := range c.outfileChoices {
+			if choice == *c.outfile {
+				return nil
+			}
+		}
+		return fmt.Errorf("'outfile' must be one of %v", c.outfileChoices)
+	}(); err != nil {
+		return err
+	}
+	if err := func() error {
+		if len(c.packageNameChoices) == 0 {
+			return nil
+		}
+		for _, choice := range c.packageNameChoices {
+			if choice == *c.packageName {
+				return nil
+			}
+		}
+		return fmt.Errorf("'package-name' must be one of %v", c.packageNameChoices)
+	}(); err != nil {
+		return err
+	}
+	if err := func() error {
+		if len(c.stdoutChoices) == 0 {
+			return nil
+		}
+		for _, choice := range c.stdoutChoices {
+			if choice == *c.stdout {
+				return nil
+			}
+		}
+		return fmt.Errorf("'stdout' must be one of %v", c.stdoutChoices)
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *clifromyamlCommand) validateArgs(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("'clifromyaml': too few arguments; expect 1, but got %d", len(args))
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("'clifromyaml': too many arguments; expect 1, but got %d", len(args))
+	}
+	return nil
 }
 
 func (c *clifromyamlCommand) usage() string {
@@ -102,7 +176,7 @@ func (c *clifromyamlCommand) writeHelp() error {
 }
 
 func (c *clifromyamlCommand) writeVersion() error {
-	_, err := fmt.Fprintln(c.w, "0.0.2")
+	_, err := fmt.Fprintln(c.w, "0.0.4")
 	return err
 }
 
@@ -112,12 +186,13 @@ func (c *clifromyamlCommand) run(args []string) error {
 		if *c.version {
 			return c.writeVersion()
 		}
-		args = c.flags.Args()
-		if len(args) < 1 {
-			return fmt.Errorf("'clifromyaml': too few arguments; expect 1, but got %d", len(args))
+		// Check that all flags are oneof the defined choices.
+		if err := c.validateFlags(); err != nil {
+			return err
 		}
-		if len(args) > 1 {
-			return fmt.Errorf("'clifromyaml': too many arguments; expect 1, but got %d", len(args))
+		args = c.flags.Args()
+		if err := c.validateArgs(args); err != nil {
+			return err
 		}
 		return c.clifromyaml.Run(*c.dryRun, *c.outfile, *c.packageName, *c.stdout, args[0])
 	case flag.ErrHelp:
@@ -127,20 +202,27 @@ func (c *clifromyamlCommand) run(args []string) error {
 	}
 }
 
+// CLI is the Command Line Interface for clifromyaml.
 type CLI struct {
 	clifromyamlCommand clifromyamlCommand
 }
 
+// NewCLI returns a new CLI that parses all flags and arguments from the command
+// line and invokes the corresponding Application method.
 func NewCLI(app Application) *CLI {
 	return NewCLIWithWriter(os.Stdout, app)
 }
 
+// NewCLIWithWriter is like NewCLI, but any output is written to w instead of
+// stdout.
 func NewCLIWithWriter(w io.Writer, app Application) *CLI {
 	return &CLI{
 		clifromyamlCommand: newClifromyamlCommand(w, app),
 	}
 }
 
+// Run runs the CLI. It parses all flags and arguments and attempts to invoke to
+// corresponding method of Application.
 func (c *CLI) Run() error {
 	return c.clifromyamlCommand.run(os.Args[1:])
 }
