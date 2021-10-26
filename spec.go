@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -222,8 +223,9 @@ func (c *Command) ParametersAndTypes() string {
 }
 
 type Flag struct {
-	Help    string      `yaml:"help"`
-	Default interface{} `yaml:"default"`
+	Help    string        `yaml:"help"`
+	Default interface{}   `yaml:"default"`
+	Oneof   []interface{} `yaml:"oneof"`
 }
 
 func (f *Flag) Type() string {
@@ -270,26 +272,38 @@ func (f *Flag) FlagFunc() string {
 	return strings.Title(flagFuncName[len(flagFuncName)-1])
 }
 
-func (f *Flag) DefaultArg() interface{} {
+func (f *Flag) validate() error {
 	if f.Default == nil {
+		return errors.New("flag default must be defined")
+	}
+	defaultType := reflect.TypeOf(f.Default)
+	for _, choice := range f.Oneof {
+		choiceType := reflect.TypeOf(choice)
+		if choiceType != defaultType {
+			return fmt.Errorf("%v choice in oneof must be same type as the default (%v)", choice, f.Default)
+		}
+	}
+	return nil
+}
+
+// asArg takes an interface{} and returns it as it should be passed as a Go
+// argument. For types other than durations and strings it simply returns the
+// input unchanged. For strings it returns the quoted string. For durations it
+// returns `time.Duration(<int64>)`.
+func asArg(v interface{}) interface{} {
+	if v == nil {
 		// Assume it's a string.
 		return "\"\""
 	}
-	str, ok := f.Default.(string)
+	str, ok := v.(string)
 	if !ok {
-		return f.Default
+		// Use the literal value.
+		return v
 	}
 	if d, err := time.ParseDuration(str); err == nil {
 		return fmt.Sprintf("time.Duration(%d)", int64(d))
 	}
 	return fmt.Sprintf("%q", str)
-}
-
-func (f *Flag) validate() error {
-	if f.Default == nil {
-		return errors.New("flag default must be defined")
-	}
-	return nil
 }
 
 func toCamelCase(in string) string {

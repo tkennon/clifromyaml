@@ -40,6 +40,7 @@ func (application) Run(dryRun bool, outfile string, packageName string, stdout b
 
 	tmpl, err := template.New("cli").Funcs(template.FuncMap{
 		"toCamelCase": toCamelCase,
+		"asArg":       asArg,
 		"title":       strings.Title,
 	}).Parse(cliTemplate)
 	if err != nil {

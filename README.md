@@ -151,6 +151,7 @@ run:             # What should happen when the app is run
     <flag name>: # An example flag name
       help:      # Describes the flag
       default:   # The flags default value
+      oneof: []  # Optional. If defined, the flag must be set to one of the choices by the user
 ```
 
 ## TODO

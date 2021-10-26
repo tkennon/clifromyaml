@@ -7,6 +7,7 @@ type {{.ChainedName}}Command struct {
     command{{if ne .Version ""}}
     version *bool{{end}}
     {{range $fname, $flag := .Flags}}{{toCamelCase $fname}} *{{$flag.Type}}
+    {{toCamelCase $fname}}Choices []{{$flag.Type}}
     {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}} {{$command.ChainedName}}Command
     {{else}}{{toCamelCase .Name}} {{title .ChainedName}}{{end}}
 }
@@ -16,13 +17,41 @@ func new{{title .ChainedName}}Command(w io.Writer, {{if eq (len .SubCommands) 0}
     c := {{.ChainedName}}Command{
         command: command,{{if ne .Version ""}}
         version: command.flags.Bool("version", false, "print version"),{{end}}
-        {{range $fname, $flag := .Flags}}{{toCamelCase $fname}}: command.flags.{{$flag.FlagFunc}}("{{$fname}}", {{$flag.DefaultArg}}, "{{$flag.Help}}"),
+        {{range $fname, $flag := .Flags}}{{toCamelCase $fname}}: command.flags.{{$flag.FlagFunc}}("{{$fname}}", {{asArg $flag.Default}}, "{{$flag.Help}}"),
+        {{toCamelCase $fname}}Choices: {{if gt (len $flag.Oneof) 0}}[]{{$flag.Type}}{ {{range $flag.Oneof}}{{asArg .}},{{end}} }{{else}}nil{{end}},
         {{end}}{{range $cname, $command := .SubCommands}}{{toCamelCase $cname}}: new{{title $command.ChainedName}}Command(w, app),
         {{else}}{{toCamelCase .Name}}: {{toCamelCase .Name}},{{end}}
     }
     c.flags.Usage = c.bufferHelp
 
     return c
+}
+
+func (c *{{.ChainedName}}Command) validateFlags() error {
+    {{range $fname, $flag := .Flags}}if err := func() error {
+        if len(c.{{toCamelCase $fname}}Choices) == 0 {
+            return nil
+        }
+        for _, choice := range c.{{toCamelCase $fname}}Choices {
+            if choice == *c.{{toCamelCase $fname}} {
+                return nil
+            }
+        }
+        return fmt.Errorf("'{{$fname}}' must be one of %v", c.{{toCamelCase $fname}}Choices)
+    }(); err != nil {
+        return err
+    }
+    {{end}}return nil
+}
+
+func (c *{{.ChainedName}}Command) validateArgs(args []string) error {
+    if len(args) < {{.ArgsLen}} {
+        return fmt.Errorf("'{{.Invocation}}': too few arguments; expect {{.ArgsLen}}{{if .VariadicArgs}} or more{{end}}, but got %d", len(args))
+    }
+    {{if not .VariadicArgs}}if len(args) > {{.ArgsLen}} {
+        return fmt.Errorf("'{{.Invocation}}': too many arguments; expect {{.ArgsLen}}, but got %d", len(args))
+    }{{end}}
+    return nil
 }
 
 func (c *{{.ChainedName}}Command) usage() string {
@@ -82,13 +111,14 @@ func (c *{{.ChainedName}}Command) run(args []string) error {
         {{if ne .Version ""}}if *c.version {
             return c.writeVersion()
         }{{end}}
-        args = c.flags.Args()
-        if len(args) < {{.ArgsLen}} {
-            return fmt.Errorf("'{{.Invocation}}': too few arguments; expect {{.ArgsLen}}{{if .VariadicArgs}} or more{{end}}, but got %d", len(args))
+        // Check that all flags are oneof the defined choices.
+        if err := c.validateFlags(); err != nil {
+            return err
         }
-        {{if not .VariadicArgs}}if len(args) > {{.ArgsLen}} {
-            return fmt.Errorf("'{{.Invocation}}': too many arguments; expect {{.ArgsLen}}, but got %d", len(args))
-        }{{end}}
+        args = c.flags.Args()
+        if err := c.validateArgs(args); err != nil {
+            return err
+        }
         return c.{{toCamelCase .Name}}.Run{{if not .IsRoot}}{{title .ChainedName}}{{end}}({{.Parameters "args"}})
     case flag.ErrHelp:
         return c.writeHelp()
