@@ -9,6 +9,30 @@ on with the interesting bits of coding: application logic.
 `go get github.com/tkennon/clifromyaml` and make sure that `~/go/bin` is in your
 PATH.
 
+## Why `clifromyaml`?
+
+There are many other mature and feature-full cli packages for Go, and by
+comparison `clifromyaml` seems rather basic. I wrote this package to make
+getting up and running with a console app quick and easy for developers, not to
+provide every possible configuration option under the sun. I am sure there will
+be applications for which `clifromyaml` does not meet all the requirements, but
+those projects will be well served by something like github.com/spf13/cobra or
+github.com/urfave/cli.
+
+Goals:
+
+- simplicity
+- readability
+- speed of development
+
+Non-goals:
+
+- feature compatibility with other Go CLI packages
+- infinitely extensible and customisable CLI options
+
+This is not to say that features won't be added, but they won't be added at the
+expense of any of the project goals.
+
 ## Example
 
 Define a CLI in a yaml file
@@ -18,8 +42,8 @@ Define a CLI in a yaml file
 # (required).
 app: example
 # Declares the top level command (required). Commands consist of arguments,
-# variadic arguments, flags, and sub-commands. A command may declare either a of
-# subcommands, or a combination of args, vargs, and flags.
+# variadic arguments, flags, and sub-commands. A command may declare either
+# further subcommands, or a combination of args, vargs, and flags.
 run:
   # The help string for the command. Will be printed whenever the user asks for
   # help through the automatically generated -h or --help flags.
@@ -101,8 +125,6 @@ import (
 	"time"
 )
 
-//go:generate clifromyaml cli.yaml
-
 type myApplication struct {
 	// Stuff
 }
@@ -113,7 +135,7 @@ func (a *myApplication) RunExampleFoo(dryRun bool, wait time.Duration, in string
 }
 
 func (a *myApplication) RunExampleBar(baz string, first string, bars ...string) error {
-	fmt.Printf("Doing bar for %s and %v\n", first, bars)
+	fmt.Printf("Doing bar with %s for %s and %v\n", baz, first, bars)
 	return nil
 }
 
@@ -167,8 +189,12 @@ $ ./example bar --baz pink first
 
 ```shell
 $ ./example bar a b c d e f g h i j k l m n o p
-Doing bar for a and [b c d e f g h i j k l m n o p]
+Doing bar with red for a and [b c d e f g h i j k l m n o p]
 ```
+
+To complete the setup, include a `//go:generate clifromyaml path/to/cli.yaml`
+line in `main.go` so that the CLI bindings are rebuilt with a
+`go generate; go build`.
 
 Check out the  `example/` directory for further examples. Also checkout
 `cli.yaml` which defines the CLI used for `clifromyaml` itself.
