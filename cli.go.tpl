@@ -57,7 +57,7 @@ func (c *{{.ChainedName}}Command) validateArgs(args []string) error {
 func (c *{{.ChainedName}}Command) usage() string {
     usage := []string{"Usage:", "{{.Invocation}}"}{{if gt (len .SubCommands) 0}}
     usage = append(usage, "<command>"){{end}}
-    c.flags.VisitAll(appendFlagUsage(usage))
+    c.flags.VisitAll(appendFlagUsage(&usage))
     {{range .Args}}{{range $aname, $arg := .}}usage = append(usage, "<{{$aname}}>"){{end}}
     {{end}}{{with .VariadicArgs}}usage = append(usage, "[<{{.}}>...]"){{end}}
     return strings.Join(usage, " ")
@@ -173,14 +173,18 @@ func newCommand(name string, help string, w io.Writer) command {
 
 // appendFlagUsage returns a function that appends a string describing the flags
 // usage to the slice passed in. The usage is of the form
-// `[-<flag name> <flag type>]`. For boolean flags the <flag type> is omitted.
-func appendFlagUsage(usage []string) func(f *flag.Flag) {
-    return func( f *flag.Flag) {
+// `[--<flag name> <flag type>]`. For boolean flags the <flag type> is omitted.
+func appendFlagUsage(usage *[]string) func(f *flag.Flag) {
+    return func(f *flag.Flag) {
         flagArg := ""
         if typ, _ := flag.UnquoteUsage(f); typ != "" {
             flagArg = fmt.Sprintf(" <%s>", typ)
         }
-        usage = append(usage, fmt.Sprintf("[-%s%s]", f.Name, flagArg))
+        dash := "-"
+        if len(f.Name) > 1 {
+            dash = "--"
+        }
+        *usage = append(*usage, fmt.Sprintf("[%s%s%s]", dash, f.Name, flagArg))
     }
 }
 

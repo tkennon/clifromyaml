@@ -1,0 +1,54 @@
+# Declares the name of the application as it will be invoked by a user
+# (required).
+app: example
+# Declares the top level command (required). Commands consist of arguments,
+# variadic arguments, flags, and sub-commands. A command may declare either a of
+# subcommands, or a combination of args, vargs, and flags.
+run:
+  # The help string for the command. Will be printed whenever the user asks for
+  # help through the automatically generated -h or --help flags.
+  help: This is my application to do stuff
+  # This example application declares two sub-commands: foo and bar.
+  subcommands:
+    foo:
+      help: Do a foo
+      # Declares that foo takes exactly two ordered arguments. The generated Go
+      # code will refer to these arguments as `in` and `out` respectively. Both
+      # args have an associated description which will appear in the printed
+      # help output and example usage.
+      args:
+        - in: the input to foo
+        - out: the output of foo
+      # Declares the foo can optionally take two flags. Note that the generated
+      # Go code uses the stdlib "flag" package and so the flag names may be
+      # prefixed with either single or double dashes by the user (for example
+      # `--wait 2m3s` or `-wait=1s`). As a consequence, single letter aliases
+      # are not supported (`-w 1s`).
+      flags:
+        dry-run:
+          # As with commands and arguments, flags have help strings. The better
+          # the help strings, the easier the application will be to use.
+          help: don't actually write to the output
+          # A default must be decalred: this is how clifromyaml infers the type
+          # of the flag. Integer, boolean, string, and time.Duration types are
+          # supported.
+          default: false
+        wait:
+          help: wait a bit before writing to the output
+          default: 5s
+    bar:
+      # The bar command takes at least one argument, but may take a variadic
+      # number.
+      help: Do lots of bar
+      args:
+       - first: the first bar
+      # The description of the vargs appears in example usage generated in the
+      # printed help output.
+      vargs: bars
+      flags:
+        # Optionally takes a flag baz that must be one of the predefined
+        # choices. If it is not then an error is returned.
+        baz:
+          help: some optional extra baz
+          default: red
+          oneof: [red, blue, yellow]

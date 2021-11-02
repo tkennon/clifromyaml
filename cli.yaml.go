@@ -37,14 +37,18 @@ func newCommand(name string, help string, w io.Writer) command {
 
 // appendFlagUsage returns a function that appends a string describing the flags
 // usage to the slice passed in. The usage is of the form
-// `[-<flag name> <flag type>]`. For boolean flags the <flag type> is omitted.
-func appendFlagUsage(usage []string) func(f *flag.Flag) {
+// `[--<flag name> <flag type>]`. For boolean flags the <flag type> is omitted.
+func appendFlagUsage(usage *[]string) func(f *flag.Flag) {
 	return func(f *flag.Flag) {
 		flagArg := ""
 		if typ, _ := flag.UnquoteUsage(f); typ != "" {
 			flagArg = fmt.Sprintf(" <%s>", typ)
 		}
-		usage = append(usage, fmt.Sprintf("[-%s%s]", f.Name, flagArg))
+		dash := "-"
+		if len(f.Name) > 1 {
+			dash = "--"
+		}
+		*usage = append(*usage, fmt.Sprintf("[%s%s%s]", dash, f.Name, flagArg))
 	}
 }
 
@@ -154,7 +158,7 @@ func (c *clifromyamlCommand) validateArgs(args []string) error {
 
 func (c *clifromyamlCommand) usage() string {
 	usage := []string{"Usage:", "clifromyaml"}
-	c.flags.VisitAll(appendFlagUsage(usage))
+	c.flags.VisitAll(appendFlagUsage(&usage))
 	usage = append(usage, "<yaml-spec>")
 
 	return strings.Join(usage, " ")
@@ -176,7 +180,7 @@ func (c *clifromyamlCommand) writeHelp() error {
 }
 
 func (c *clifromyamlCommand) writeVersion() error {
-	_, err := fmt.Fprintln(c.w, "0.0.4")
+	_, err := fmt.Fprintln(c.w, "0.0.5")
 	return err
 }
 
