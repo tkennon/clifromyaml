@@ -58,7 +58,6 @@ type Clifromyaml interface {
 
 type clifromyamlCommand struct {
 	command
-	version            *bool
 	dryRun             *bool
 	dryRunChoices      []bool
 	outfile            *string
@@ -74,7 +73,6 @@ func newClifromyamlCommand(w io.Writer, clifromyaml Clifromyaml) clifromyamlComm
 	command := newCommand("clifromyaml", "Generate Golang CLI bindings from a YAML definition.", w)
 	c := clifromyamlCommand{
 		command:            command,
-		version:            command.flags.Bool("version", false, "print version"),
 		dryRun:             command.flags.Bool("dry-run", false, "Don't write the generated Go bindings anywhere, just parse the yaml and print any errors."),
 		dryRunChoices:      nil,
 		outfile:            command.flags.String("outfile", "", "The `file` that the generated CLI bindings should be written to. If empty then they will be written to <yaml-spec>.go."),
@@ -179,17 +177,10 @@ func (c *clifromyamlCommand) writeHelp() error {
 	return err
 }
 
-func (c *clifromyamlCommand) writeVersion() error {
-	_, err := fmt.Fprintln(c.w, "0.0.5")
-	return err
-}
-
 func (c *clifromyamlCommand) run(args []string) error {
 	switch err := c.flags.Parse(args); err {
 	case nil:
-		if *c.version {
-			return c.writeVersion()
-		}
+
 		// Check that all flags are oneof the defined choices.
 		if err := c.validateFlags(); err != nil {
 			return err

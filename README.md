@@ -315,7 +315,8 @@ parsed as a varg).
 - `default` defines the default value of the flag. This must be specified so
   that `clifromyaml` can infer the type of the flag.
 - `oneof` optionally specifies that the flag must be set to one of the given
-  choices. If invoked with any other value then an error will be returned.
+  choices. If the app is invoked by the user with any value not in this set then
+  an error will be returned.
 
 Flags must be passed before any arguments: `./myapp [flags] <args>`.
 
@@ -324,7 +325,3 @@ Flags must be passed before any arguments: `./myapp [flags] <args>`.
 `subcommands` allows you to recursively define subcommands (i,e, `test` and
 `build` are subcommands of `go`). You may not specify args, vargs, or flags as
 well as `subcommands`.
-
-## TODO
-
-- write unit tests
